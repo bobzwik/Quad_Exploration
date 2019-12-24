@@ -80,7 +80,7 @@ def sameAxisAnimation(t_all, waypoints, pos_all, quat_all, sDes_tr_all, Ts, para
     #     trajType = 'Hover'
     # else:
     #     ax.scatter(x_wp, y_wp, z_wp, color='green', alpha=1, marker = 'o', s = 25)
-    #     if (xyzType == 1):
+    #     if (xyzType == 1 or xyzType == 12):
     #         trajType = 'Simple Waypoints'
     #     else:
     #         ax.plot(xDes, yDes, zDes, ':', lw=1.3, color='green')
@@ -115,7 +115,6 @@ def sameAxisAnimation(t_all, waypoints, pos_all, quat_all, sDes_tr_all, Ts, para
     #     yawTrajType = 'Follow'
     # elif (yawType == 4):
     #     yawTrajType = 'Zero'
-
 
 
     # titleType1 = ax.text2D(0.95, 0.95, trajType, transform=ax.transAxes, horizontalalignment='right')
