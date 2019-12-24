@@ -55,60 +55,52 @@ arc1_center_y = -15
 tun_width = 5
 
 phi_lim1 = 0
-phi_lim2 = pi/4
+phi_lim2 = pi*0.17444286
 phi_step = pi/240
 phi_space = np.arange(phi_lim1, phi_lim2+phi_step, phi_step) ## POSITIVE increments for 1st arc
 
 radius_step = 0.08
-radius_space = np.arange(arc1_radius-tun_width/2, arc1_radius+tun_width/2+radius_step, radius_step)
+radius_space = np.arange(arc1_radius-tun_width/2, arc1_radius+tun_width/2, radius_step)
 
-# Arc 1 wall 1
-for i in range(len(z_space)):
-    for j in range(len(phi_space)):
-        x_point = arc1_center_x + (arc1_radius+tun_width/2)*np.sin(phi_space[j])
-        y_point = arc1_center_y + (arc1_radius+tun_width/2)*np.cos(phi_space[j])
-        z_point = z_space[i]
-
+# Arc 1
+for i in range(len(phi_space)):
+    for j in range(len(z_space)):
+        # wall 1
+        x_point = arc1_center_x + (arc1_radius+tun_width/2)*np.sin(phi_space[i])
+        y_point = arc1_center_y + (arc1_radius+tun_width/2)*np.cos(phi_space[i])
+        z_point = z_space[j]
         # Create point and add it to point cloud
         point = np.array([x_point, y_point, z_point])
         pointcloud = np.vstack((pointcloud, point))
 
-# Arc 1 wall 2
-for i in range(len(z_space)):
-    for j in range(len(phi_space)):
-        x_point = arc1_center_x + (arc1_radius-tun_width/2)*np.sin(phi_space[j])
-        y_point = arc1_center_y + (arc1_radius-tun_width/2)*np.cos(phi_space[j])
-        z_point = z_space[i]
-
+        # wall 2
+        x_point = arc1_center_x + (arc1_radius-tun_width/2)*np.sin(phi_space[i])
+        y_point = arc1_center_y + (arc1_radius-tun_width/2)*np.cos(phi_space[i])
+        z_point = z_space[j]
         # Create point and add it to point cloud
         point = np.array([x_point, y_point, z_point])
         pointcloud = np.vstack((pointcloud, point))
-
-# Arc 1 wall 3
-for i in range(len(radius_space)):
-    for j in range(len(phi_space)):
-        x_point = arc1_center_x + radius_space[i]*np.sin(phi_space[j])
-        y_point = arc1_center_y + radius_space[i]*np.cos(phi_space[j])
+    
+    for j in range(len(radius_space)):
+        # floor
+        x_point = arc1_center_x + radius_space[j]*np.sin(phi_space[i])
+        y_point = arc1_center_y + radius_space[j]*np.cos(phi_space[i])
         z_point = zlim1
-
         # Create point and add it to point cloud
         point = np.array([x_point, y_point, z_point])
         pointcloud = np.vstack((pointcloud, point))
 
-# Arc 1 wall 4
-for i in range(len(radius_space)):
-    for j in range(len(phi_space)):
-        x_point = arc1_center_x + radius_space[i]*np.sin(phi_space[j])
-        y_point = arc1_center_y + radius_space[i]*np.cos(phi_space[j])
+        # Ceiling
+        x_point = arc1_center_x + radius_space[j]*np.sin(phi_space[i])
+        y_point = arc1_center_y + radius_space[j]*np.cos(phi_space[i])
         z_point = zlim2
-
         # Create point and add it to point cloud
         point = np.array([x_point, y_point, z_point])
         pointcloud = np.vstack((pointcloud, point))
 
 ## Arc 2
 arc2_radius = 15            ## You can change radius of following arcs
-radius_space = np.arange(arc2_radius-tun_width/2, arc2_radius+tun_width/2+radius_step, radius_step)
+radius_space = np.arange(arc2_radius-tun_width/2, arc2_radius+tun_width/2, radius_step)
 
 arc1_end_x = arc1_center_x + arc1_radius*np.sin(phi_lim2)
 arc1_end_y = arc1_center_y + arc1_radius*np.cos(phi_lim2)
@@ -116,57 +108,49 @@ arc1_end_y = arc1_center_y + arc1_radius*np.cos(phi_lim2)
 arc2_center_x = arc1_end_x + arc2_radius*(arc1_end_x-arc1_center_x)/arc1_radius
 arc2_center_y = arc1_end_y + arc2_radius*(arc1_end_y-arc1_center_y)/arc1_radius
 
-phi_lim1 = phi_lim2+pi          ## last angle of previous arc PLUS pi
+phi_lim1 = phi_space[-1]+pi          ## last angle of previous arc PLUS pi
 phi_lim2 = 3*pi/4
 phi_space = np.arange(phi_lim1, phi_lim2-phi_step, -phi_step)  ## NEGATIVE increments for 2nd arc
 
-# Arc 2 wall 1
-for i in range(len(z_space)):
-    for j in range(len(phi_space)):
-        x_point = arc2_center_x + (arc2_radius+tun_width/2)*np.sin(phi_space[j])
-        y_point = arc2_center_y + (arc2_radius+tun_width/2)*np.cos(phi_space[j])
-        z_point = z_space[i]
-
+# Arc 2
+for i in range(len(phi_space)):
+    for j in range(len(z_space)):
+        # wall 1
+        x_point = arc2_center_x + (arc2_radius+tun_width/2)*np.sin(phi_space[i])
+        y_point = arc2_center_y + (arc2_radius+tun_width/2)*np.cos(phi_space[i])
+        z_point = z_space[j]
         # Create point and add it to point cloud
         point = np.array([x_point, y_point, z_point])
         pointcloud = np.vstack((pointcloud, point))
 
-# Arc 2 wall 2
-for i in range(len(z_space)):
-    for j in range(len(phi_space)):
-        x_point = arc2_center_x + (arc2_radius-tun_width/2)*np.sin(phi_space[j])
-        y_point = arc2_center_y + (arc2_radius-tun_width/2)*np.cos(phi_space[j])
-        z_point = z_space[i]
-
+        # wall 2
+        x_point = arc2_center_x + (arc2_radius-tun_width/2)*np.sin(phi_space[i])
+        y_point = arc2_center_y + (arc2_radius-tun_width/2)*np.cos(phi_space[i])
+        z_point = z_space[j]
         # Create point and add it to point cloud
         point = np.array([x_point, y_point, z_point])
         pointcloud = np.vstack((pointcloud, point))
-
-# Arc 2 wall 3
-for i in range(len(radius_space)):
-    for j in range(len(phi_space)):
-        x_point = arc2_center_x + radius_space[i]*np.sin(phi_space[j])
-        y_point = arc2_center_y + radius_space[i]*np.cos(phi_space[j])
+    
+    for j in range(len(radius_space)):
+        # floor
+        x_point = arc2_center_x + radius_space[j]*np.sin(phi_space[i])
+        y_point = arc2_center_y + radius_space[j]*np.cos(phi_space[i])
         z_point = zlim1
-
         # Create point and add it to point cloud
         point = np.array([x_point, y_point, z_point])
         pointcloud = np.vstack((pointcloud, point))
 
-# Arc 2 wall 4
-for i in range(len(radius_space)):
-    for j in range(len(phi_space)):
-        x_point = arc2_center_x + radius_space[i]*np.sin(phi_space[j])
-        y_point = arc2_center_y + radius_space[i]*np.cos(phi_space[j])
+        # Ceiling
+        x_point = arc2_center_x + radius_space[j]*np.sin(phi_space[i])
+        y_point = arc2_center_y + radius_space[j]*np.cos(phi_space[i])
         z_point = zlim2
-
         # Create point and add it to point cloud
         point = np.array([x_point, y_point, z_point])
         pointcloud = np.vstack((pointcloud, point))
 
 ## Arc 3
 arc3_radius = 15            ## You can change radius of following arcs
-radius_space = np.arange(arc3_radius-tun_width/2, arc3_radius+tun_width/2+radius_step, radius_step)
+radius_space = np.arange(arc3_radius-tun_width/2, arc3_radius+tun_width/2, radius_step)
 
 arc2_end_x = arc2_center_x + arc2_radius*np.sin(phi_lim2)
 arc2_end_y = arc2_center_y + arc2_radius*np.cos(phi_lim2)
@@ -174,54 +158,200 @@ arc2_end_y = arc2_center_y + arc2_radius*np.cos(phi_lim2)
 arc3_center_x = arc2_end_x + arc3_radius*(arc2_end_x-arc2_center_x)/arc2_radius
 arc3_center_y = arc2_end_y + arc3_radius*(arc2_end_y-arc2_center_y)/arc2_radius
 
-phi_lim1 = phi_lim2-pi   ## last angle of previous arc MINUS pi
+phi_lim1 = phi_space[-1]-pi   ## last angle of previous arc MINUS pi
 phi_lim2 = pi/4
 phi_space = np.arange(phi_lim1, phi_lim2+phi_step, phi_step)  ## POSITIVE increments for 3rd arc
 
-# Arc 3 wall 1
-for i in range(len(z_space)):
-    for j in range(len(phi_space)):
-        x_point = arc3_center_x + (arc3_radius+tun_width/2)*np.sin(phi_space[j])
-        y_point = arc3_center_y + (arc3_radius+tun_width/2)*np.cos(phi_space[j])
-        z_point = z_space[i]
-
+# Arc 3
+for i in range(len(phi_space)):
+    for j in range(len(z_space)):
+        # wall 1
+        x_point = arc3_center_x + (arc3_radius+tun_width/2)*np.sin(phi_space[i])
+        y_point = arc3_center_y + (arc3_radius+tun_width/2)*np.cos(phi_space[i])
+        z_point = z_space[j]
         # Create point and add it to point cloud
         point = np.array([x_point, y_point, z_point])
         pointcloud = np.vstack((pointcloud, point))
 
-# Arc 3 wall 2
-for i in range(len(z_space)):
-    for j in range(len(phi_space)):
-        x_point = arc3_center_x + (arc3_radius-tun_width/2)*np.sin(phi_space[j])
-        y_point = arc3_center_y + (arc3_radius-tun_width/2)*np.cos(phi_space[j])
-        z_point = z_space[i]
-
+        # wall 2
+        x_point = arc3_center_x + (arc3_radius-tun_width/2)*np.sin(phi_space[i])
+        y_point = arc3_center_y + (arc3_radius-tun_width/2)*np.cos(phi_space[i])
+        z_point = z_space[j]
         # Create point and add it to point cloud
         point = np.array([x_point, y_point, z_point])
         pointcloud = np.vstack((pointcloud, point))
-
-# Arc 3 wall 3
-for i in range(len(radius_space)):
-    for j in range(len(phi_space)):
-        x_point = arc3_center_x + radius_space[i]*np.sin(phi_space[j])
-        y_point = arc3_center_y + radius_space[i]*np.cos(phi_space[j])
+    
+    for j in range(len(radius_space)):
+        # floor
+        x_point = arc3_center_x + radius_space[j]*np.sin(phi_space[i])
+        y_point = arc3_center_y + radius_space[j]*np.cos(phi_space[i])
         z_point = zlim1
-
         # Create point and add it to point cloud
         point = np.array([x_point, y_point, z_point])
         pointcloud = np.vstack((pointcloud, point))
 
-# Arc 3 wall 4
-for i in range(len(radius_space)):
-    for j in range(len(phi_space)):
-        x_point = arc3_center_x + radius_space[i]*np.sin(phi_space[j])
-        y_point = arc3_center_y + radius_space[i]*np.cos(phi_space[j])
+        # Ceiling
+        x_point = arc3_center_x + radius_space[j]*np.sin(phi_space[i])
+        y_point = arc3_center_y + radius_space[j]*np.cos(phi_space[i])
         z_point = zlim2
-
         # Create point and add it to point cloud
         point = np.array([x_point, y_point, z_point])
-        pointcloud = np.vstack((pointcloud, point))        
+        pointcloud = np.vstack((pointcloud, point))
 
+## Arc 4
+arc4_radius = 15            ## You can change radius of following arcs
+radius_space = np.arange(arc4_radius-tun_width/2, arc4_radius+tun_width/2, radius_step)
+
+arc3_end_x = arc3_center_x + arc3_radius*np.sin(phi_lim2)
+arc3_end_y = arc3_center_y + arc3_radius*np.cos(phi_lim2)
+
+arc4_center_x = arc3_end_x + arc4_radius*(arc3_end_x-arc3_center_x)/arc3_radius
+arc4_center_y = arc3_end_y + arc4_radius*(arc3_end_y-arc3_center_y)/arc3_radius
+
+phi_lim1 = phi_space[-1]+pi          ## last angle of previous arc PLUS pi
+phi_lim2 = 3*pi/4
+phi_space = np.arange(phi_lim1, phi_lim2-phi_step, -phi_step)  ## NEGATIVE increments for 2nd arc
+
+# Arc 4
+for i in range(len(phi_space)):
+    for j in range(len(z_space)):
+        # wall 1
+        x_point = arc4_center_x + (arc4_radius+tun_width/2)*np.sin(phi_space[i])
+        y_point = arc4_center_y + (arc4_radius+tun_width/2)*np.cos(phi_space[i])
+        z_point = z_space[j]
+        # Create point and add it to point cloud
+        point = np.array([x_point, y_point, z_point])
+        pointcloud = np.vstack((pointcloud, point))
+
+        # wall 2
+        x_point = arc4_center_x + (arc4_radius-tun_width/2)*np.sin(phi_space[i])
+        y_point = arc4_center_y + (arc4_radius-tun_width/2)*np.cos(phi_space[i])
+        z_point = z_space[j]
+        # Create point and add it to point cloud
+        point = np.array([x_point, y_point, z_point])
+        pointcloud = np.vstack((pointcloud, point))
+    
+    for j in range(len(radius_space)):
+        # floor
+        x_point = arc4_center_x + radius_space[j]*np.sin(phi_space[i])
+        y_point = arc4_center_y + radius_space[j]*np.cos(phi_space[i])
+        z_point = zlim1
+        # Create point and add it to point cloud
+        point = np.array([x_point, y_point, z_point])
+        pointcloud = np.vstack((pointcloud, point))
+
+        # Ceiling
+        x_point = arc4_center_x + radius_space[j]*np.sin(phi_space[i])
+        y_point = arc4_center_y + radius_space[j]*np.cos(phi_space[i])
+        z_point = zlim2
+        # Create point and add it to point cloud
+        point = np.array([x_point, y_point, z_point])
+        pointcloud = np.vstack((pointcloud, point))
+
+## Arc 5
+arc5_radius = 15            ## You can change radius of following arcs
+radius_space = np.arange(arc5_radius-tun_width/2, arc5_radius+tun_width/2, radius_step)
+
+arc4_end_x = arc4_center_x + arc4_radius*np.sin(phi_lim2)
+arc4_end_y = arc4_center_y + arc4_radius*np.cos(phi_lim2)
+
+arc5_center_x = arc4_end_x + arc5_radius*(arc4_end_x-arc4_center_x)/arc4_radius
+arc5_center_y = arc4_end_y + arc5_radius*(arc4_end_y-arc4_center_y)/arc4_radius
+
+phi_lim1 = phi_space[-1]-pi   ## last angle of previous arc MINUS pi
+phi_lim2 = pi*0.17444286
+phi_space = np.arange(phi_lim1, phi_lim2+phi_step, phi_step)  ## POSITIVE increments for 3rd arc
+
+# Arc 5
+for i in range(len(phi_space)):
+    for j in range(len(z_space)):
+        # wall 1
+        x_point = arc5_center_x + (arc5_radius+tun_width/2)*np.sin(phi_space[i])
+        y_point = arc5_center_y + (arc5_radius+tun_width/2)*np.cos(phi_space[i])
+        z_point = z_space[j]
+        # Create point and add it to point cloud
+        point = np.array([x_point, y_point, z_point])
+        pointcloud = np.vstack((pointcloud, point))
+
+        # wall 2
+        x_point = arc5_center_x + (arc5_radius-tun_width/2)*np.sin(phi_space[i])
+        y_point = arc5_center_y + (arc5_radius-tun_width/2)*np.cos(phi_space[i])
+        z_point = z_space[j]
+        # Create point and add it to point cloud
+        point = np.array([x_point, y_point, z_point])
+        pointcloud = np.vstack((pointcloud, point))
+    
+    for j in range(len(radius_space)):
+        # floor
+        x_point = arc5_center_x + radius_space[j]*np.sin(phi_space[i])
+        y_point = arc5_center_y + radius_space[j]*np.cos(phi_space[i])
+        z_point = zlim1
+        # Create point and add it to point cloud
+        point = np.array([x_point, y_point, z_point])
+        pointcloud = np.vstack((pointcloud, point))
+
+        # Ceiling
+        x_point = arc5_center_x + radius_space[j]*np.sin(phi_space[i])
+        y_point = arc5_center_y + radius_space[j]*np.cos(phi_space[i])
+        z_point = zlim2
+        # Create point and add it to point cloud
+        point = np.array([x_point, y_point, z_point])
+        pointcloud = np.vstack((pointcloud, point))
+
+## Arc 6
+arc6_radius = 15            ## You can change radius of following arcs
+radius_space = np.arange(arc6_radius-tun_width/2, arc6_radius+tun_width/2, radius_step)
+
+arc5_end_x = arc5_center_x + arc5_radius*np.sin(phi_lim2)
+arc5_end_y = arc5_center_y + arc5_radius*np.cos(phi_lim2)
+
+arc6_center_x = arc5_end_x + arc6_radius*(arc5_end_x-arc5_center_x)/arc5_radius
+arc6_center_y = arc5_end_y + arc6_radius*(arc5_end_y-arc5_center_y)/arc5_radius
+
+phi_lim1 = phi_space[-1]+pi          ## last angle of previous arc PLUS pi
+phi_lim2 = pi
+phi_space = np.arange(phi_lim1, phi_lim2-phi_step, -phi_step)  ## NEGATIVE increments for 2nd arc
+
+# Arc 6
+for i in range(len(phi_space)):
+    for j in range(len(z_space)):
+        # wall 1
+        x_point = arc6_center_x + (arc6_radius+tun_width/2)*np.sin(phi_space[i])
+        y_point = arc6_center_y + (arc6_radius+tun_width/2)*np.cos(phi_space[i])
+        z_point = z_space[j]
+        # Create point and add it to point cloud
+        point = np.array([x_point, y_point, z_point])
+        pointcloud = np.vstack((pointcloud, point))
+
+        # wall 2
+        x_point = arc6_center_x + (arc6_radius-tun_width/2)*np.sin(phi_space[i])
+        y_point = arc6_center_y + (arc6_radius-tun_width/2)*np.cos(phi_space[i])
+        z_point = z_space[j]
+        # Create point and add it to point cloud
+        point = np.array([x_point, y_point, z_point])
+        pointcloud = np.vstack((pointcloud, point))
+    
+    for j in range(len(radius_space)):
+        # floor
+        x_point = arc6_center_x + radius_space[j]*np.sin(phi_space[i])
+        y_point = arc6_center_y + radius_space[j]*np.cos(phi_space[i])
+        z_point = zlim1
+        # Create point and add it to point cloud
+        point = np.array([x_point, y_point, z_point])
+        pointcloud = np.vstack((pointcloud, point))
+
+        # Ceiling
+        x_point = arc6_center_x + radius_space[j]*np.sin(phi_space[i])
+        y_point = arc6_center_y + radius_space[j]*np.cos(phi_space[i])
+        z_point = zlim2
+        # Create point and add it to point cloud
+        point = np.array([x_point, y_point, z_point])
+        pointcloud = np.vstack((pointcloud, point))
+
+arc6_end_x = arc6_center_x + arc6_radius*np.sin(phi_lim2)
+arc6_end_y = arc6_center_y + arc6_radius*np.cos(phi_lim2)
+
+print((arc6_end_x, arc6_end_y))
 
 # Remove first point
 pointcloud = np.delete(pointcloud, 0, axis=0)

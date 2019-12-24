@@ -8,14 +8,15 @@ Please feel free to use and modify this, but keep the above information. Thanks!
 
 import numpy as np
 from numpy import pi
-import matplotlib.pyplot as plt
-import mpl_toolkits.mplot3d.axes3d as p3
-from matplotlib import animation
+import vispy.scene
+import vispy.app
+# from vispy.scene import visuals
+from vispy import app, visuals, scene
 
 import utils
 import config
 
-numFrames = 8
+numFrames = 10
 
 def sameAxisAnimation(t_all, waypoints, pos_all, quat_all, sDes_tr_all, Ts, params, xyzType, yawType, ifsave):
 
@@ -31,16 +32,27 @@ def sameAxisAnimation(t_all, waypoints, pos_all, quat_all, sDes_tr_all, Ts, para
     y_wp = waypoints[:,1]
     z_wp = waypoints[:,2]
 
+    Plot3D1 = scene.visuals.create_visual_node(visuals.LinePlotVisual)
+    Plot3D2 = scene.visuals.create_visual_node(visuals.LinePlotVisual)
+    Plot3D3 = scene.visuals.create_visual_node(visuals.LinePlotVisual)
+
+    canvas = vispy.scene.SceneCanvas(keys='interactive', show=True)
+    canvas.measure_fps()
+    view = canvas.central_widget.add_view()
+    view.camera = vispy.scene.cameras.TurntableCamera()
+    grid = scene.visuals.GridLines(color=(1,1,1), parent=view.scene)
+    axis = scene.visuals.XYZAxis(parent=view.scene)
+
     if (config.orient == "NED"):
         z = -z
         zDes = -zDes
         z_wp = -z_wp
+        flip = view.camera.flip
+        view.camera.flip = flip[0], not flip[1], flip[2]
 
-    fig = plt.figure()
-    ax = p3.Axes3D(fig)
-    line1, = ax.plot([], [], [], lw=2, color='red')
-    line2, = ax.plot([], [], [], lw=2, color='blue')
-    line3, = ax.plot([], [], [], '--', lw=1, color='blue')
+    line1 = Plot3D1([[],[],[]], width=2, color='red', marker_size=0, parent=view.scene)
+    line2 = Plot3D2([[],[],[]], width=2, color='blue', marker_size=0,parent=view.scene)
+    line3 = Plot3D3([[],[],[]], width=1, color='blue', marker_size=0, parent=view.scene)
 
     # Setting the axes properties
     extraEachSide = 0.5
@@ -49,74 +61,76 @@ def sameAxisAnimation(t_all, waypoints, pos_all, quat_all, sDes_tr_all, Ts, para
     mid_y = 0.5*(y.max()+y.min())
     mid_z = 0.5*(z.max()+z.min())
     
-    ax.set_xlim3d([mid_x-maxRange, mid_x+maxRange])
-    ax.set_xlabel('X')
-    if (config.orient == "NED"):
-        ax.set_ylim3d([mid_y+maxRange, mid_y-maxRange])
-    elif (config.orient == "ENU"):
-        ax.set_ylim3d([mid_y-maxRange, mid_y+maxRange])
-    ax.set_ylabel('Y')
-    ax.set_zlim3d([mid_z-maxRange, mid_z+maxRange])
-    ax.set_zlabel('Altitude')
+    # ax.set_xlim3d([mid_x-maxRange, mid_x+maxRange])
+    # ax.set_xlabel('X')
+    # if (config.orient == "NED"):
+    #     ax.set_ylim3d([mid_y+maxRange, mid_y-maxRange])
+    # elif (config.orient == "ENU"):
+    #     ax.set_ylim3d([mid_y-maxRange, mid_y+maxRange])
+    # ax.set_ylabel('Y')
+    # ax.set_zlim3d([mid_z-maxRange, mid_z+maxRange])
+    # ax.set_zlabel('Altitude')
 
-    titleTime = ax.text2D(0.05, 0.95, "", transform=ax.transAxes)
+    # titleTime = ax.text2D(0.05, 0.95, "", transform=ax.transAxes)
 
-    trajType = ''
-    yawTrajType = ''
+    # trajType = ''
+    # yawTrajType = ''
 
-    if (xyzType == 0):
-        trajType = 'Hover'
-    else:
-        ax.scatter(x_wp, y_wp, z_wp, color='green', alpha=1, marker = 'o', s = 25)
-        if (xyzType == 1):
-            trajType = 'Simple Waypoints'
-        else:
-            ax.plot(xDes, yDes, zDes, ':', lw=1.3, color='green')
-            if (xyzType == 2):
-                trajType = 'Simple Waypoint Interpolation'
-            elif (xyzType == 3):
-                trajType = 'Minimum Velocity Trajectory'
-            elif (xyzType == 4):
-                trajType = 'Minimum Acceleration Trajectory'
-            elif (xyzType == 5):
-                trajType = 'Minimum Jerk Trajectory'
-            elif (xyzType == 6):
-                trajType = 'Minimum Snap Trajectory'
-            elif (xyzType == 7):
-                trajType = 'Minimum Acceleration Trajectory - Stop'
-            elif (xyzType == 8):
-                trajType = 'Minimum Jerk Trajectory - Stop'
-            elif (xyzType == 9):
-                trajType = 'Minimum Snap Trajectory - Stop'
-            elif (xyzType == 10):
-                trajType = 'Minimum Jerk Trajectory - Fast Stop'
-            elif (xyzType == 1):
-                trajType = 'Minimum Snap Trajectory - Fast Stop'
+    # if (xyzType == 0):
+    #     trajType = 'Hover'
+    # else:
+    #     ax.scatter(x_wp, y_wp, z_wp, color='green', alpha=1, marker = 'o', s = 25)
+    #     if (xyzType == 1):
+    #         trajType = 'Simple Waypoints'
+    #     else:
+    #         ax.plot(xDes, yDes, zDes, ':', lw=1.3, color='green')
+    #         if (xyzType == 2):
+    #             trajType = 'Simple Waypoint Interpolation'
+    #         elif (xyzType == 3):
+    #             trajType = 'Minimum Velocity Trajectory'
+    #         elif (xyzType == 4):
+    #             trajType = 'Minimum Acceleration Trajectory'
+    #         elif (xyzType == 5):
+    #             trajType = 'Minimum Jerk Trajectory'
+    #         elif (xyzType == 6):
+    #             trajType = 'Minimum Snap Trajectory'
+    #         elif (xyzType == 7):
+    #             trajType = 'Minimum Acceleration Trajectory - Stop'
+    #         elif (xyzType == 8):
+    #             trajType = 'Minimum Jerk Trajectory - Stop'
+    #         elif (xyzType == 9):
+    #             trajType = 'Minimum Snap Trajectory - Stop'
+    #         elif (xyzType == 10):
+    #             trajType = 'Minimum Jerk Trajectory - Fast Stop'
+    #         elif (xyzType == 1):
+    #             trajType = 'Minimum Snap Trajectory - Fast Stop'
 
-    if (yawType == 0):
-        yawTrajType = 'None'
-    elif (yawType == 1):
-        yawTrajType = 'Waypoints'
-    elif (yawType == 2):
-        yawTrajType = 'Interpolation'
-    elif (yawType == 3):
-        yawTrajType = 'Follow'
-    elif (yawType == 4):
-        yawTrajType = 'Zero'
+    # if (yawType == 0):
+    #     yawTrajType = 'None'
+    # elif (yawType == 1):
+    #     yawTrajType = 'Waypoints'
+    # elif (yawType == 2):
+    #     yawTrajType = 'Interpolation'
+    # elif (yawType == 3):
+    #     yawTrajType = 'Follow'
+    # elif (yawType == 4):
+    #     yawTrajType = 'Zero'
 
 
 
-    titleType1 = ax.text2D(0.95, 0.95, trajType, transform=ax.transAxes, horizontalalignment='right')
-    titleType2 = ax.text2D(0.95, 0.91, 'Yaw: '+ yawTrajType, transform=ax.transAxes, horizontalalignment='right')   
+    # titleType1 = ax.text2D(0.95, 0.95, trajType, transform=ax.transAxes, horizontalalignment='right')
+    # titleType2 = ax.text2D(0.95, 0.91, 'Yaw: '+ yawTrajType, transform=ax.transAxes, horizontalalignment='right')   
     
-    def updateLines(i):
-    
+    i = 1
+
+    def update(ev):
+        nonlocal i
         time = t_all[i*numFrames]
         pos = pos_all[i*numFrames]
         x = pos[0]
         y = pos[1]
         z = pos[2]
-
+        # print(pos)
         x_from0 = pos_all[0:i*numFrames,0]
         y_from0 = pos_all[0:i*numFrames,1]
         z_from0 = pos_all[0:i*numFrames,2]
@@ -135,38 +149,41 @@ def sameAxisAnimation(t_all, waypoints, pos_all, quat_all, sDes_tr_all, Ts, para
         R = utils.quat2Dcm(quat)    
         motorPoints = np.array([[dxm, -dym, dzm], [0, 0, 0], [dxm, dym, dzm], [-dxm, dym, dzm], [0, 0, 0], [-dxm, -dym, dzm]])
         motorPoints = np.dot(R, np.transpose(motorPoints))
-        motorPoints[0,:] += x 
-        motorPoints[1,:] += y 
-        motorPoints[2,:] += z 
-        
-        line1.set_data(motorPoints[0,0:3], motorPoints[1,0:3])
-        line1.set_3d_properties(motorPoints[2,0:3])
-        line2.set_data(motorPoints[0,3:6], motorPoints[1,3:6])
-        line2.set_3d_properties(motorPoints[2,3:6])
-        line3.set_data(x_from0, y_from0)
-        line3.set_3d_properties(z_from0)
-        titleTime.set_text(u"Time = {:.2f} s".format(time[0]))
-        
-        return line1, line2
+        motorPoints[0,:] = motorPoints[0,:] + x 
+        motorPoints[1,:] = motorPoints[1,:] + y 
+        motorPoints[2,:] = motorPoints[2,:] + z 
+        # print(np.array([motorPoints[0,0:3], motorPoints[1,0:3], motorPoints[2,0:3]]).T)
+        # print(np.array([motorPoints[0,3:6], motorPoints[1,3:6], motorPoints[2,3:6]]).T)
+        line1.set_data(np.array([motorPoints[0,0:3], motorPoints[1,0:3], motorPoints[2,0:3]]).T, marker_size=0,)
+        line2.set_data(np.array([motorPoints[0,3:6], motorPoints[1,3:6], motorPoints[2,3:6]]).T, marker_size=0,)
+        line3.set_data(np.array([x_from0, y_from0, z_from0]).T, marker_size=0)
+        # titleTime.set_text(u"Time = {:.2f} s".format(time[0]))
+        i = i + 1
+        # return line1, line2
 
 
-    def ini_plot():
+    # def ini_plot():
 
-        line1.set_data([], [])
-        line1.set_3d_properties([])
-        line2.set_data([], [])
-        line2.set_3d_properties([])
-        line3.set_data([], [])
-        line3.set_3d_properties([])
+    #     line1.data = ([], [], [])
+    #     line2.data = ([], [], [])
+    #     line3.data = ([], [], [])
 
-        return line1, line2, line3
+    #     return line1, line2, line3
 
         
     # Creating the Animation object
-    line_ani = animation.FuncAnimation(fig, updateLines, init_func=ini_plot, frames=len(t_all[0:-2:numFrames]), interval=(Ts*1000*numFrames), blit=False)
+    # line_ani = animation.FuncAnimation(fig, updateLines, init_func=ini_plot, frames=len(t_all[0:-2:numFrames]), interval=(Ts*1000*numFrames), blit=False)
     
-    if (ifsave):
-        line_ani.save('Gifs/Raw/animation_{0:.0f}_{1:.0f}.gif'.format(xyzType,yawType), dpi=80, writer='imagemagick', fps=25)
+    # if (ifsave):
+    #     line_ani.save('Gifs/Raw/animation_{0:.0f}_{1:.0f}.gif'.format(xyzType,yawType), dpi=80, writer='imagemagick', fps=25)
         
-    plt.show()
-    return line_ani
+    # plt.show()
+    # return line_ani
+
+    timer = app.Timer(Ts*numFrames)
+    timer.connect(update)
+    timer.start(iterations=len(x)/numFrames-1)
+
+    import sys
+    if sys.flags.interactive != 1:
+        vispy.app.run()
