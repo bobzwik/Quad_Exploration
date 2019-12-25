@@ -12,13 +12,14 @@ import time
 import cProfile
 
 from trajectory import Trajectory
+from potentialField import PotField
 from ctrl import Control
 from quadFiles.quad import Quadcopter
 from utils.windModel import Wind
 import utils
 import config
 
-def quad_sim(t, Ts, quad, ctrl, wind, traj):
+def quad_sim(t, Ts, quad, ctrl, wind, traj, potfld):
     
     # Dynamics (using last timestep's commands)
     # ---------------------------
@@ -27,7 +28,11 @@ def quad_sim(t, Ts, quad, ctrl, wind, traj):
 
     # Trajectory for Desired States 
     # ---------------------------
-    sDes = traj.desiredState(t, Ts, quad)        
+    sDes = traj.desiredState(t, Ts, quad)
+
+    # Potential Field Influence 
+    # ---------------------------     
+    potfld.isWithinRange(quad)
 
     # Generate Commands (for next iteration)
     # ---------------------------
@@ -43,7 +48,7 @@ def main():
     # --------------------------- 
     Ti = 0
     Ts = 0.005
-    Tf = 18
+    Tf = 20
     ifsave = 0
 
     # Choose trajectory settings
@@ -69,12 +74,17 @@ def main():
     # ---------------------------
     quad = Quadcopter(Ti)
     traj = Trajectory(quad, ctrlType, trajSelect)
+    potfld = PotField()
     ctrl = Control(quad, traj.yawType)
     wind = Wind('None', 2.0, 90, -15)
 
     # Trajectory for First Desired States
     # ---------------------------
-    sDes = traj.desiredState(0, Ts, quad)        
+    sDes = traj.desiredState(0, Ts, quad) 
+
+    # First Potential Field Calculation
+    # ---------------------------
+    potfld.isWithinRange(quad)       
 
     # Generate First Commands
     # ---------------------------
@@ -82,42 +92,65 @@ def main():
     
     # Initialize Result Matrixes
     # ---------------------------
-    t_all         = Ti
-    s_all         = quad.state.T
-    pos_all       = quad.pos.T
-    vel_all       = quad.vel.T
-    quat_all      = quad.quat.T
-    omega_all     = quad.omega.T
-    euler_all     = quad.euler.T
-    sDes_traj_all = traj.sDes.T
-    sDes_calc_all = ctrl.sDesCalc.T
-    w_cmd_all     = ctrl.w_cmd.T
-    wMotor_all    = quad.wMotor.T
-    thr_all       = quad.thr.T
-    tor_all       = quad.tor.T
+
+    numTimeStep = int(Tf/Ts+1)
+
+    t_all          = np.zeros(numTimeStep)
+    s_all          = np.zeros([numTimeStep,len(quad.state)])
+    pos_all        = np.zeros([numTimeStep,len(quad.pos)])
+    vel_all        = np.zeros([numTimeStep,len(quad.vel)])
+    quat_all       = np.zeros([numTimeStep,len(quad.quat)])
+    omega_all      = np.zeros([numTimeStep,len(quad.omega)])
+    euler_all      = np.zeros([numTimeStep,len(quad.euler)])
+    sDes_traj_all  = np.zeros([numTimeStep,len(traj.sDes)])
+    sDes_calc_all  = np.zeros([numTimeStep,len(ctrl.sDesCalc)])
+    w_cmd_all      = np.zeros([numTimeStep,len(ctrl.w_cmd)])
+    wMotor_all     = np.zeros([numTimeStep,len(quad.wMotor)])
+    thr_all        = np.zeros([numTimeStep,len(quad.thr)])
+    tor_all        = np.zeros([numTimeStep,len(quad.tor)])
+    notInRange_all = np.zeros([numTimeStep, potfld.num_points], dtype=bool)
+    inRange_all    = np.zeros([numTimeStep, potfld.num_points], dtype=bool)
+
+    t_all[0]            = Ti
+    s_all[0,:]          = quad.state
+    pos_all[0,:]        = quad.pos
+    vel_all[0,:]        = quad.vel
+    quat_all[0,:]       = quad.quat
+    omega_all[0,:]      = quad.omega
+    euler_all[0,:]      = quad.euler
+    sDes_traj_all[0,:]  = traj.sDes
+    sDes_calc_all[0,:]  = ctrl.sDesCalc
+    w_cmd_all[0,:]      = ctrl.w_cmd
+    wMotor_all[0,:]     = quad.wMotor
+    thr_all[0,:]        = quad.thr
+    tor_all[0,:]        = quad.tor
+    notInRange_all[0,:] = potfld.notWithinRange
+    inRange_all[0,:]    = potfld.withinRange
 
     # Run Simulation
     # ---------------------------
     t = Ti
-    i = 0
+    i = 1
     while round(t,3) < Tf:
         
-        t = quad_sim(t, Ts, quad, ctrl, wind, traj)
+        t = quad_sim(t, Ts, quad, ctrl, wind, traj, potfld)
         
         # print("{:.3f}".format(t))
-        t_all           = np.vstack((t_all, t))
-        s_all           = np.vstack((s_all, quad.state.T))
-        pos_all         = np.vstack((pos_all, quad.pos.T))
-        vel_all         = np.vstack((vel_all, quad.vel.T))
-        quat_all        = np.vstack((quat_all, quad.quat.T))
-        omega_all       = np.vstack((omega_all, quad.omega.T))
-        euler_all       = np.vstack((euler_all, quad.euler.T))
-        sDes_traj_all   = np.vstack((sDes_traj_all, traj.sDes.T))
-        sDes_calc_all   = np.vstack((sDes_calc_all, ctrl.sDesCalc.T))
-        w_cmd_all       = np.vstack((w_cmd_all, ctrl.w_cmd.T))
-        wMotor_all      = np.vstack((wMotor_all, quad.wMotor.T))
-        thr_all         = np.vstack((thr_all, quad.thr.T))
-        tor_all         = np.vstack((tor_all, quad.tor.T))
+        t_all[i]             = t
+        s_all[i,:]           = quad.state
+        pos_all[i,:]         = quad.pos
+        vel_all[i,:]         = quad.vel
+        quat_all[i,:]        = quad.quat
+        omega_all[i,:]       = quad.omega
+        euler_all[i,:]       = quad.euler
+        sDes_traj_all[i,:]   = traj.sDes
+        sDes_calc_all[i,:]   = ctrl.sDesCalc
+        w_cmd_all[i,:]       = ctrl.w_cmd
+        wMotor_all[i,:]      = quad.wMotor
+        thr_all[i,:]         = quad.thr
+        tor_all[i,:]         = quad.tor
+        notInRange_all[i,:]  = potfld.notWithinRange
+        inRange_all[i,:]     = potfld.withinRange
         i += 1
     
     end_time = time.time()
@@ -128,7 +161,7 @@ def main():
 
     # utils.fullprint(sDes_traj_all[:,3:6])
     utils.makeFigures(quad.params, t_all, pos_all, vel_all, quat_all, omega_all, euler_all, w_cmd_all, wMotor_all, thr_all, tor_all, sDes_traj_all, sDes_calc_all)
-    utils.sameAxisAnimation(t_all, traj.wps, pos_all, quat_all, sDes_traj_all, Ts, quad.params, traj.xyzType, traj.yawType, ifsave)
+    utils.sameAxisAnimation(t_all, traj.wps, pos_all, quat_all, sDes_traj_all, Ts, quad.params, traj.xyzType, traj.yawType, potfld, notInRange_all, inRange_all, ifsave)
     plt.show()
 
 if __name__ == "__main__":

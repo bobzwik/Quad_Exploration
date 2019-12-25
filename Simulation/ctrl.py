@@ -71,9 +71,9 @@ rate_P_gain = np.array([Pp, Pq, Pr])
 rate_D_gain = np.array([Dp, Dq, Dr])
 
 # Max Velocities
-uMax = 5.0
-vMax = 5.0
-wMax = 5.0
+uMax = 2.0
+vMax = 2.0
+wMax = 2.0
 
 velMax = np.array([uMax, vMax, wMax])
 
