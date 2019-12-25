@@ -92,22 +92,21 @@ def main():
     
     # Initialize Result Matrixes
     # ---------------------------
-
     numTimeStep = int(Tf/Ts+1)
 
     t_all          = np.zeros(numTimeStep)
-    s_all          = np.zeros([numTimeStep,len(quad.state)])
-    pos_all        = np.zeros([numTimeStep,len(quad.pos)])
-    vel_all        = np.zeros([numTimeStep,len(quad.vel)])
-    quat_all       = np.zeros([numTimeStep,len(quad.quat)])
-    omega_all      = np.zeros([numTimeStep,len(quad.omega)])
-    euler_all      = np.zeros([numTimeStep,len(quad.euler)])
-    sDes_traj_all  = np.zeros([numTimeStep,len(traj.sDes)])
-    sDes_calc_all  = np.zeros([numTimeStep,len(ctrl.sDesCalc)])
-    w_cmd_all      = np.zeros([numTimeStep,len(ctrl.w_cmd)])
-    wMotor_all     = np.zeros([numTimeStep,len(quad.wMotor)])
-    thr_all        = np.zeros([numTimeStep,len(quad.thr)])
-    tor_all        = np.zeros([numTimeStep,len(quad.tor)])
+    s_all          = np.zeros([numTimeStep, len(quad.state)])
+    pos_all        = np.zeros([numTimeStep, len(quad.pos)])
+    vel_all        = np.zeros([numTimeStep, len(quad.vel)])
+    quat_all       = np.zeros([numTimeStep, len(quad.quat)])
+    omega_all      = np.zeros([numTimeStep, len(quad.omega)])
+    euler_all      = np.zeros([numTimeStep, len(quad.euler)])
+    sDes_traj_all  = np.zeros([numTimeStep, len(traj.sDes)])
+    sDes_calc_all  = np.zeros([numTimeStep, len(ctrl.sDesCalc)])
+    w_cmd_all      = np.zeros([numTimeStep, len(ctrl.w_cmd)])
+    wMotor_all     = np.zeros([numTimeStep, len(quad.wMotor)])
+    thr_all        = np.zeros([numTimeStep, len(quad.thr)])
+    tor_all        = np.zeros([numTimeStep, len(quad.tor)])
     notInRange_all = np.zeros([numTimeStep, potfld.num_points], dtype=bool)
     inRange_all    = np.zeros([numTimeStep, potfld.num_points], dtype=bool)
 
@@ -151,6 +150,7 @@ def main():
         tor_all[i,:]         = quad.tor
         notInRange_all[i,:]  = potfld.notWithinRange
         inRange_all[i,:]     = potfld.withinRange
+        
         i += 1
     
     end_time = time.time()
