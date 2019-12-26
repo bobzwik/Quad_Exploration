@@ -52,7 +52,7 @@ pointcloud = np.zeros([1,3])
 arc1_radius = 15
 arc1_center_x = 0
 arc1_center_y = -15
-tun_width = 5
+tun_width = 4
 
 phi_lim1 = 0
 phi_lim2 = pi*0.17444286
