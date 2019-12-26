@@ -77,12 +77,12 @@ def sameAxisAnimation(t_all, waypoints, pos_all, quat_all, sDes_tr_all, Ts, para
     line2 = Plot3D2([[],[],[]], width=3, color='blue', marker_size=0, parent=view.scene)
     line3 = Plot3D3([[],[],[]], width=2, color='red', marker_size=0, parent=view.scene)
 
-    # Setting the axes properties
-    extraEachSide = 0.5
-    maxRange = 0.5*np.array([x.max()-x.min(), y.max()-y.min(), z.max()-z.min()]).max() + extraEachSide
-    mid_x = 0.5*(x.max()+x.min())
-    mid_y = 0.5*(y.max()+y.min())
-    mid_z = 0.5*(z.max()+z.min())
+    # # Setting the axes properties
+    # extraEachSide = 0.5
+    # maxRange = 0.5*np.array([x.max()-x.min(), y.max()-y.min(), z.max()-z.min()]).max() + extraEachSide
+    # mid_x = 0.5*(x.max()+x.min())
+    # mid_y = 0.5*(y.max()+y.min())
+    # mid_z = 0.5*(z.max()+z.min())
     
     # ax.set_xlim3d([mid_x-maxRange, mid_x+maxRange])
     # ax.set_xlabel('X')
@@ -152,7 +152,6 @@ def sameAxisAnimation(t_all, waypoints, pos_all, quat_all, sDes_tr_all, Ts, para
         x = pos[0]
         y = pos[1]
         z = pos[2]
-        # print(pos)
         x_from0 = pos_all[0:i*numFrames,0]
         y_from0 = pos_all[0:i*numFrames,1]
         z_from0 = pos_all[0:i*numFrames,2]
@@ -174,8 +173,6 @@ def sameAxisAnimation(t_all, waypoints, pos_all, quat_all, sDes_tr_all, Ts, para
         motorPoints[0,:] = motorPoints[0,:] + x 
         motorPoints[1,:] = motorPoints[1,:] + y 
         motorPoints[2,:] = motorPoints[2,:] + z 
-        # print(np.array([motorPoints[0,0:3], motorPoints[1,0:3], motorPoints[2,0:3]]).T)
-        # print(np.array([motorPoints[0,3:6], motorPoints[1,3:6], motorPoints[2,3:6]]).T)
         line1.set_data(np.array([motorPoints[0,0:3], motorPoints[1,0:3], motorPoints[2,0:3]]).T, marker_size=0,)
         line2.set_data(np.array([motorPoints[0,3:6], motorPoints[1,3:6], motorPoints[2,3:6]]).T, marker_size=0,)
         line3.set_data(np.array([x_from0, y_from0, z_from0]).T, marker_size=0)
@@ -186,27 +183,7 @@ def sameAxisAnimation(t_all, waypoints, pos_all, quat_all, sDes_tr_all, Ts, para
         scatterInRange.set_data(potfld.pointcloud[np.where(inRange_all[i*numFrames,:])[0]], edge_color=None, face_color=(0, 1, 0, .2), size=6)
         scatterInField.set_data(potfld.pointcloud[np.where(inField_all[i*numFrames,:])[0]], edge_color=None, face_color=(1, 0, 0, .2), size=6)
 
-        i = i + 1
-        # return line1, line2
-
-
-    # def ini_plot():
-
-    #     line1.data = ([], [], [])
-    #     line2.data = ([], [], [])
-    #     line3.data = ([], [], [])
-
-    #     return line1, line2, line3
-
-        
-    # Creating the Animation object
-    # line_ani = animation.FuncAnimation(fig, updateLines, init_func=ini_plot, frames=len(t_all[0:-2:numFrames]), interval=(Ts*1000*numFrames), blit=False)
-    
-    # if (ifsave):
-    #     line_ani.save('Gifs/Raw/animation_{0:.0f}_{1:.0f}.gif'.format(xyzType,yawType), dpi=80, writer='imagemagick', fps=25)
-        
-    # plt.show()
-    # return line_ani
+        i += 1
 
     timer = app.Timer(Ts*numFrames)
     timer.connect(update)
