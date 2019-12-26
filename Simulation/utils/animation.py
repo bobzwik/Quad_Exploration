@@ -17,7 +17,7 @@ import config
 
 numFrames = 10
 
-def sameAxisAnimation(t_all, waypoints, pos_all, quat_all, sDes_tr_all, Ts, params, xyzType, yawType, potfld, notInRange_all, inRange_all, ifsave):
+def sameAxisAnimation(t_all, waypoints, pos_all, quat_all, sDes_tr_all, Ts, params, xyzType, yawType, potfld, notInRange_all, inRange_all, inField_all, ifsave):
     # print(vispy.sys_info())
     
     x = pos_all[:,0]
@@ -57,6 +57,11 @@ def sameAxisAnimation(t_all, waypoints, pos_all, quat_all, sDes_tr_all, Ts, para
     scatterInRange.set_data(potfld.pointcloud[np.where(inRange_all[0,:])[0]], edge_color=None, face_color=(0, 1, 0, .2), size=6)
     # scatter.set_gl_state('translucent', cull_face=False)
     view.add(scatterInRange)
+
+    scatterInField = visuals.Markers()
+    scatterInField.set_data(potfld.pointcloud[np.where(inField_all[0,:])[0]], edge_color=None, face_color=(1, 0, 0, .2), size=6)
+    # scatter.set_gl_state('translucent', cull_face=False)
+    view.add(scatterInField)
 
     # add a colored 3D axis for orientation
     axis = visuals.XYZAxis(parent=view.scene)
@@ -179,6 +184,7 @@ def sameAxisAnimation(t_all, waypoints, pos_all, quat_all, sDes_tr_all, Ts, para
         view.camera.center = [x,y,z]
         scatter.set_data(potfld.pointcloud[np.where(notInRange_all[i*numFrames,:])[0]], edge_color=None, face_color=(1, 1, 0, .2), size=6)
         scatterInRange.set_data(potfld.pointcloud[np.where(inRange_all[i*numFrames,:])[0]], edge_color=None, face_color=(0, 1, 0, .2), size=6)
+        scatterInField.set_data(potfld.pointcloud[np.where(inField_all[i*numFrames,:])[0]], edge_color=None, face_color=(1, 0, 0, .2), size=6)
 
         i = i + 1
         # return line1, line2

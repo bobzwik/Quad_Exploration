@@ -33,6 +33,7 @@ def quad_sim(t, Ts, quad, ctrl, wind, traj, potfld):
     # Potential Field Influence 
     # ---------------------------     
     potfld.isWithinRange(quad)
+    potfld.isWithinField(quad)
 
     # Generate Commands (for next iteration)
     # ---------------------------
@@ -84,7 +85,8 @@ def main():
 
     # First Potential Field Calculation
     # ---------------------------
-    potfld.isWithinRange(quad)       
+    potfld.isWithinRange(quad)
+    potfld.isWithinField(quad)        
 
     # Generate First Commands
     # ---------------------------
@@ -109,6 +111,7 @@ def main():
     tor_all        = np.zeros([numTimeStep, len(quad.tor)])
     notInRange_all = np.zeros([numTimeStep, potfld.num_points], dtype=bool)
     inRange_all    = np.zeros([numTimeStep, potfld.num_points], dtype=bool)
+    inField_all    = np.zeros([numTimeStep, potfld.num_points], dtype=bool)
 
     t_all[0]            = Ti
     s_all[0,:]          = quad.state
@@ -124,7 +127,8 @@ def main():
     thr_all[0,:]        = quad.thr
     tor_all[0,:]        = quad.tor
     notInRange_all[0,:] = potfld.notWithinRange
-    inRange_all[0,:]    = potfld.withinRange
+    inRange_all[0,:]    = potfld.inRangeNotField
+    inField_all[0,:]    = potfld.withinField
 
     # Run Simulation
     # ---------------------------
@@ -149,7 +153,8 @@ def main():
         thr_all[i,:]         = quad.thr
         tor_all[i,:]         = quad.tor
         notInRange_all[i,:]  = potfld.notWithinRange
-        inRange_all[i,:]     = potfld.withinRange
+        inRange_all[i,:]     = potfld.inRangeNotField
+        inField_all[i,:]     = potfld.withinField
         
         i += 1
     
@@ -161,7 +166,7 @@ def main():
 
     # utils.fullprint(sDes_traj_all[:,3:6])
     utils.makeFigures(quad.params, t_all, pos_all, vel_all, quat_all, omega_all, euler_all, w_cmd_all, wMotor_all, thr_all, tor_all, sDes_traj_all, sDes_calc_all)
-    utils.sameAxisAnimation(t_all, traj.wps, pos_all, quat_all, sDes_traj_all, Ts, quad.params, traj.xyzType, traj.yawType, potfld, notInRange_all, inRange_all, ifsave)
+    utils.sameAxisAnimation(t_all, traj.wps, pos_all, quat_all, sDes_traj_all, Ts, quad.params, traj.xyzType, traj.yawType, potfld, notInRange_all, inRange_all, inField_all, ifsave)
     plt.show()
 
 if __name__ == "__main__":
