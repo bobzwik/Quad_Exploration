@@ -174,7 +174,7 @@ def sameAxisAnimation(t_all, waypoints, pos_all, quat_all, sDes_tr_all, Ts, para
         line1.set_data(np.array([motorPoints[0,0:3], motorPoints[1,0:3], motorPoints[2,0:3]]).T, marker_size=0,)
         line2.set_data(np.array([motorPoints[0,3:6], motorPoints[1,3:6], motorPoints[2,3:6]]).T, marker_size=0,)
         line3.set_data(np.array([x_from0, y_from0, z_from0]).T, marker_size=0)
-        # titleTime.set_text(u"Time = {:.2f} s".format(time[0]))
+        # titleTime.set_text(u"Time = {:.2f} s".format(time))
 
         view.camera.center = [x,y,z]
         scatter.set_data(potfld.pointcloud[np.where(notInRange_all[i*numFrames,:])[0]], edge_color=None, face_color=(1, 1, 0, .2), size=6)
