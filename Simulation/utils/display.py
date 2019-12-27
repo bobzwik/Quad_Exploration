@@ -10,6 +10,7 @@ import numpy as np
 from numpy import pi
 import matplotlib.pyplot as plt
 import utils
+import config
 
 rad2deg = 180.0/pi
 deg2rad = pi/180.0
@@ -24,7 +25,7 @@ def fullprint(*args, **kwargs):
     np.set_printoptions(opt)
 
 
-def makeFigures(params, time, pos_all, vel_all, quat_all, omega_all, euler_all, commands, wMotor_all, thrust, torque, sDes_traj, sDes_calc):
+def makeFigures(params, time, pos_all, vel_all, quat_all, omega_all, euler_all, commands, wMotor_all, thrust, torque, sDes_traj, sDes_calc, potfld, minDist_all):
     x    = pos_all[:,0]
     y    = pos_all[:,1]
     z    = pos_all[:,2]
@@ -104,8 +105,6 @@ def makeFigures(params, time, pos_all, vel_all, quat_all, omega_all, euler_all, 
     plt.xlabel('Time (s)')
     plt.ylabel('Position (m)')
     plt.draw()
-
-
 
     plt.figure()
     plt.plot(time, xdot, time, ydot, time, zdot)
@@ -199,4 +198,26 @@ def makeFigures(params, time, pos_all, vel_all, quat_all, omega_all, euler_all, 
     plt.legend(['Pos x error','Pos y error','Pos z error'])
     plt.xlabel('Time (s)')
     plt.ylabel('Position Error (m)')
+    plt.draw()
+
+    plt.figure()
+    plt.plot(time, minDist_all)
+    plt.grid(True)
+    plt.xlabel('Time (s)')
+    plt.ylabel('Closest Obstacle Distance (m)')
+    plt.draw()
+
+    idx_z_zero = np.where(potfld.pointcloud[:,2] == 0)[0]
+    pc_top_x = potfld.pointcloud[idx_z_zero,0]
+    pc_top_y = potfld.pointcloud[idx_z_zero,1]
+
+    plt.figure()
+    plt.scatter(pc_top_x, pc_top_y, s=2)
+    plt.plot(x, y, c='r')
+    plt.grid(True)
+    plt.gca().set_aspect('equal', adjustable='box')
+    plt.xlabel('x (m)')
+    plt.ylabel('y (m)')
+    if (config.orient == "NED"):
+        plt.gca().invert_yaxis()
     plt.draw()

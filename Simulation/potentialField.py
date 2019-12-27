@@ -54,6 +54,8 @@ class PotField:
                     (self.pointcloud[self.idx_withinRange,1]-quad.pos[1])**2 +          \
                     (self.pointcloud[self.idx_withinRange,2]-quad.pos[2])**2)**(0.5)
         withinField = distance <= fieldRadius
+
+        self.distanceMin = distance.min()
         
         self.idx_withinField = self.idx_withinRange[np.where(withinField)[0]]
         self.withinField = np.zeros(self.num_points, dtype=bool)
