@@ -76,7 +76,7 @@ vMax = 2.0
 wMax = 2.0
 
 velMax = np.array([uMax, vMax, wMax])
-velMaxAll = 5.0
+velMaxAll = 2.0
 
 saturateVel_separetely = False
 
