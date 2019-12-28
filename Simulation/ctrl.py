@@ -100,16 +100,17 @@ class Control:
         if (yawType == 0):
             att_P_gain[2] = 0
         self.setYawWeight()
-        self.pos_sp    = np.zeros(3)
-        self.vel_sp    = np.zeros(3)
-        self.acc_sp    = np.zeros(3)
-        self.thrust_sp = np.zeros(3)
-        self.eul_sp    = np.zeros(3)
-        self.pqr_sp    = np.zeros(3)
-        self.yawFF     = np.zeros(3)
+        self.pos_sp        = np.zeros(3)
+        self.vel_sp        = np.zeros(3)
+        self.acc_sp        = np.zeros(3)
+        self.thrust_sp     = np.zeros(3)
+        self.thrust_rep_sp = np.zeros(3)
+        self.eul_sp        = np.zeros(3)
+        self.pqr_sp        = np.zeros(3)
+        self.yawFF         = np.zeros(3)
 
     
-    def controller(self, traj, quad, sDes, Ts):
+    def controller(self, traj, quad, sDes, potfld, Ts):
 
         # Desired State (Create a copy, hence the [:])
         # ---------------------------
@@ -127,7 +128,7 @@ class Control:
             self.saturateVel()
             self.z_vel_control(quad, Ts)
             self.xy_vel_control(quad, Ts)
-            self.thrustToAttitude(quad, Ts)
+            self.thrustToAttitude(quad, potfld, Ts)
             self.attitude_control(quad, Ts)
             self.rate_control(quad, Ts)
         elif (traj.ctrlType == "xy_vel_z_pos"):
@@ -135,7 +136,7 @@ class Control:
             self.saturateVel()
             self.z_vel_control(quad, Ts)
             self.xy_vel_control(quad, Ts)
-            self.thrustToAttitude(quad, Ts)
+            self.thrustToAttitude(quad, potfld, Ts)
             self.attitude_control(quad, Ts)
             self.rate_control(quad, Ts)
         elif (traj.ctrlType == "xyz_pos"):
@@ -144,13 +145,13 @@ class Control:
             self.saturateVel()
             self.z_vel_control(quad, Ts)
             self.xy_vel_control(quad, Ts)
-            self.thrustToAttitude(quad, Ts)
+            self.thrustToAttitude(quad, potfld, Ts)
             self.attitude_control(quad, Ts)
             self.rate_control(quad, Ts)
 
         # Mixer
         # --------------------------- 
-        self.w_cmd = utils.mixerFM(quad, norm(self.thrust_sp), self.rateCtrl)
+        self.w_cmd = utils.mixerFM(quad, norm(self.thrust_rep_sp), self.rateCtrl)
         
         # Add calculated Desired States
         # ---------------------------         
@@ -248,14 +249,19 @@ class Control:
         vel_err_lim = vel_xy_error - (thrust_xy_sp - self.thrust_sp[0:2])*arw_gain
         self.thr_int[0:2] += vel_I_gain[0:2]*vel_err_lim*Ts * quad.params["useIntergral"]
     
-    def thrustToAttitude(self, quad, Ts):
-        
+
+    def thrustToAttitude(self, quad, potfld, Ts):
         # Create Full Desired Quaternion Based on Thrust Setpoint and Desired Yaw Angle
         # ---------------------------
+
+        # Add potential field repulsive force to Thrust setpoint
+        self.thrust_rep_sp = self.thrust_sp + potfld.F_rep
+
+        # Yaw setpoint
         yaw_sp = self.eul_sp[2]
 
         # Desired body_z axis direction
-        body_z = -utils.vectNormalize(self.thrust_sp)
+        body_z = -utils.vectNormalize(self.thrust_rep_sp)
         if (config.orient == "ENU"):
             body_z = -body_z
         
@@ -280,7 +286,7 @@ class Control:
 
         # Current thrust orientation e_z and desired thrust orientation e_z_d
         e_z = quad.dcm[:,2]
-        e_z_d = -utils.vectNormalize(self.thrust_sp)
+        e_z_d = -utils.vectNormalize(self.thrust_rep_sp)
         if (config.orient == "ENU"):
             e_z_d = -e_z_d
 

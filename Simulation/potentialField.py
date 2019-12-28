@@ -67,3 +67,16 @@ class PotField:
         self.idx_inRangeNotField = self.idx_withinRange[np.where(~withinField)[0]]
         self.inRangeNotField = np.zeros(self.num_points, dtype=bool)
         self.inRangeNotField[self.idx_inRangeNotField] = True
+
+        self.fieldPointcloud = self.pointcloud[self.idx_withinField]
+        self.fieldDistance = distance[np.where(withinField)[0]]
+
+    def rep_force(self, quad):
+        k = 2
+        F_rep_x = k*(1/self.fieldDistance - 1/fieldRadius)*(1/(self.fieldDistance**2))*(quad.pos[0] - self.fieldPointcloud[:,0])/self.fieldDistance
+        F_rep_y = k*(1/self.fieldDistance - 1/fieldRadius)*(1/(self.fieldDistance**2))*(quad.pos[1] - self.fieldPointcloud[:,1])/self.fieldDistance
+        F_rep_z = k*(1/self.fieldDistance - 1/fieldRadius)*(1/(self.fieldDistance**2))*(quad.pos[2] - self.fieldPointcloud[:,2])/self.fieldDistance
+
+        self.F_rep = np.array([np.sum(F_rep_x), np.sum(F_rep_y), np.sum(F_rep_z)])
+        # self.F_rep = np.array([0,0,0])
+        
