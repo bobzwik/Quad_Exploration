@@ -46,29 +46,29 @@ class Trajectory:
                 self.t_wps = np.zeros(len(self.T_segment) + 1)
                 self.t_wps[1:] = np.cumsum(self.T_segment)
             
-            if (self.xyzType >= 3 and self.xyzType <= 6):
-                self.deriv_order = int(self.xyzType-2)       # Looking to minimize which derivative order (eg: Minimum velocity -> first order)
+            # if (self.xyzType >= 3 and self.xyzType <= 6):
+            #     self.deriv_order = int(self.xyzType-2)       # Looking to minimize which derivative order (eg: Minimum velocity -> first order)
 
-                # Calculate coefficients
-                self.coeff_x = minSomethingTraj(self.wps[:,0], self.T_segment, self.deriv_order)
-                self.coeff_y = minSomethingTraj(self.wps[:,1], self.T_segment, self.deriv_order)
-                self.coeff_z = minSomethingTraj(self.wps[:,2], self.T_segment, self.deriv_order)
+            #     # Calculate coefficients
+            #     self.coeff_x = minSomethingTraj(self.wps[:,0], self.T_segment, self.deriv_order)
+            #     self.coeff_y = minSomethingTraj(self.wps[:,1], self.T_segment, self.deriv_order)
+            #     self.coeff_z = minSomethingTraj(self.wps[:,2], self.T_segment, self.deriv_order)
 
-            elif (self.xyzType >= 7 and self.xyzType <= 9):
-                self.deriv_order = int(self.xyzType-5)       # Looking to minimize which derivative order (eg: Minimum accel -> second order)
+            # elif (self.xyzType >= 7 and self.xyzType <= 9):
+            #     self.deriv_order = int(self.xyzType-5)       # Looking to minimize which derivative order (eg: Minimum accel -> second order)
 
-                # Calculate coefficients
-                self.coeff_x = minSomethingTraj_stop(self.wps[:,0], self.T_segment, self.deriv_order)
-                self.coeff_y = minSomethingTraj_stop(self.wps[:,1], self.T_segment, self.deriv_order)
-                self.coeff_z = minSomethingTraj_stop(self.wps[:,2], self.T_segment, self.deriv_order)
+            #     # Calculate coefficients
+            #     self.coeff_x = minSomethingTraj_stop(self.wps[:,0], self.T_segment, self.deriv_order)
+            #     self.coeff_y = minSomethingTraj_stop(self.wps[:,1], self.T_segment, self.deriv_order)
+            #     self.coeff_z = minSomethingTraj_stop(self.wps[:,2], self.T_segment, self.deriv_order)
             
-            elif (self.xyzType >= 10 and self.xyzType <= 11):
-                self.deriv_order = int(self.xyzType-7)       # Looking to minimize which derivative order (eg: Minimum jerk -> third order)
+            # elif (self.xyzType >= 10 and self.xyzType <= 11):
+            #     self.deriv_order = int(self.xyzType-7)       # Looking to minimize which derivative order (eg: Minimum jerk -> third order)
 
-                # Calculate coefficients
-                self.coeff_x = minSomethingTraj_faststop(self.wps[:,0], self.T_segment, self.deriv_order)
-                self.coeff_y = minSomethingTraj_faststop(self.wps[:,1], self.T_segment, self.deriv_order)
-                self.coeff_z = minSomethingTraj_faststop(self.wps[:,2], self.T_segment, self.deriv_order)
+            #     # Calculate coefficients
+            #     self.coeff_x = minSomethingTraj_faststop(self.wps[:,0], self.T_segment, self.deriv_order)
+            #     self.coeff_y = minSomethingTraj_faststop(self.wps[:,1], self.T_segment, self.deriv_order)
+            #     self.coeff_z = minSomethingTraj_faststop(self.wps[:,2], self.T_segment, self.deriv_order)
         
         if (self.yawType == 4):
             self.y_wps = np.zeros(len(self.t_wps))
@@ -132,43 +132,43 @@ class Trajectory:
                 scale = (t - self.t_wps[self.t_idx])/self.T_segment[self.t_idx]
                 self.desPos = (1 - scale) * self.wps[self.t_idx,:] + scale * self.wps[self.t_idx + 1,:]
         
-        def pos_waypoint_min():
-            """ The function takes known number of waypoints and time, then generates a
-            minimum velocity, acceleration, jerk or snap trajectory which goes through each waypoint. 
-            The output is the desired state associated with the next waypoint for the time t.
-            """
-            if not (len(self.t_wps) == self.wps.shape[0]):
-                raise Exception("Time array and waypoint array not the same size.")
+        # def pos_waypoint_min():
+        #     """ The function takes known number of waypoints and time, then generates a
+        #     minimum velocity, acceleration, jerk or snap trajectory which goes through each waypoint. 
+        #     The output is the desired state associated with the next waypoint for the time t.
+        #     """
+        #     if not (len(self.t_wps) == self.wps.shape[0]):
+        #         raise Exception("Time array and waypoint array not the same size.")
                 
-            nb_coeff = self.deriv_order*2
+        #     nb_coeff = self.deriv_order*2
 
-            # Hover at t=0
-            if t == 0:
-                self.t_idx = 0
-                self.desPos = self.wps[0,:]
-            # Stay hover at the last waypoint position
-            elif (t >= self.t_wps[-1]):
-                self.t_idx = -1
-                self.desPos = self.wps[-1,:]
-            else:
-                self.t_idx = np.where(t <= self.t_wps)[0][0] - 1
+        #     # Hover at t=0
+        #     if t == 0:
+        #         self.t_idx = 0
+        #         self.desPos = self.wps[0,:]
+        #     # Stay hover at the last waypoint position
+        #     elif (t >= self.t_wps[-1]):
+        #         self.t_idx = -1
+        #         self.desPos = self.wps[-1,:]
+        #     else:
+        #         self.t_idx = np.where(t <= self.t_wps)[0][0] - 1
                 
-                # Scaled time (between 0 and duration of segment)
-                scale = (t - self.t_wps[self.t_idx])
+        #         # Scaled time (between 0 and duration of segment)
+        #         scale = (t - self.t_wps[self.t_idx])
                 
-                # Which coefficients to use
-                start = nb_coeff * self.t_idx
-                end = nb_coeff * (self.t_idx + 1)
+        #         # Which coefficients to use
+        #         start = nb_coeff * self.t_idx
+        #         end = nb_coeff * (self.t_idx + 1)
                 
-                # Set desired position, velocity and acceleration
-                t0 = get_poly_cc(nb_coeff, 0, scale)
-                self.desPos = np.array([self.coeff_x[start:end].dot(t0), self.coeff_y[start:end].dot(t0), self.coeff_z[start:end].dot(t0)])
+        #         # Set desired position, velocity and acceleration
+        #         t0 = get_poly_cc(nb_coeff, 0, scale)
+        #         self.desPos = np.array([self.coeff_x[start:end].dot(t0), self.coeff_y[start:end].dot(t0), self.coeff_z[start:end].dot(t0)])
 
-                t1 = get_poly_cc(nb_coeff, 1, scale)
-                self.desVel = np.array([self.coeff_x[start:end].dot(t1), self.coeff_y[start:end].dot(t1), self.coeff_z[start:end].dot(t1)])
+        #         t1 = get_poly_cc(nb_coeff, 1, scale)
+        #         self.desVel = np.array([self.coeff_x[start:end].dot(t1), self.coeff_y[start:end].dot(t1), self.coeff_z[start:end].dot(t1)])
 
-                t2 = get_poly_cc(nb_coeff, 2, scale)
-                self.desAcc = np.array([self.coeff_x[start:end].dot(t2), self.coeff_y[start:end].dot(t2), self.coeff_z[start:end].dot(t2)])
+        #         t2 = get_poly_cc(nb_coeff, 2, scale)
+        #         self.desAcc = np.array([self.coeff_x[start:end].dot(t2), self.coeff_y[start:end].dot(t2), self.coeff_z[start:end].dot(t2)])
         
         def pos_waypoint_arrived():
 
@@ -262,14 +262,8 @@ class Trajectory:
                 # Set desired positions at every t_wps[i]
                 if (self.xyzType == 1):
                     pos_waypoint_timed()
-                # Interpolate position between every waypoint, to arrive at desired position every t_wps[i]
-                elif (self.xyzType == 2):
-                    pos_waypoint_interp()
-                # Calculate a minimum velocity, acceleration, jerk or snap trajectory
-                elif (self.xyzType >= 3 and self.xyzType <= 11):
-                    pos_waypoint_min()
                 # Go to next waypoint when arrived at waypoint
-                elif (self.xyzType == 12):
+                elif (self.xyzType == 2):
                     pos_waypoint_arrived()
                 
                 # List of possible yaw trajectories
