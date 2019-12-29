@@ -114,23 +114,23 @@ class Trajectory:
             self.desPos = self.wps[self.t_idx,:]
                             
         
-        def pos_waypoint_interp():
+        # def pos_waypoint_interp():
             
-            if not (len(self.t_wps) == self.wps.shape[0]):
-                raise Exception("Time array and waypoint array not the same size.")
-            elif (np.diff(self.t_wps) <= 0).any():
-                raise Exception("Time array isn't properly ordered.") 
+        #     if not (len(self.t_wps) == self.wps.shape[0]):
+        #         raise Exception("Time array and waypoint array not the same size.")
+        #     elif (np.diff(self.t_wps) <= 0).any():
+        #         raise Exception("Time array isn't properly ordered.") 
 
-            if (t == 0):
-                self.t_idx = 0
-                self.desPos = self.wps[0,:]
-            elif (t >= self.t_wps[-1]):
-                self.t_idx = -1
-                self.desPos = self.wps[-1,:]
-            else:
-                self.t_idx = np.where(t <= self.t_wps)[0][0] - 1
-                scale = (t - self.t_wps[self.t_idx])/self.T_segment[self.t_idx]
-                self.desPos = (1 - scale) * self.wps[self.t_idx,:] + scale * self.wps[self.t_idx + 1,:]
+        #     if (t == 0):
+        #         self.t_idx = 0
+        #         self.desPos = self.wps[0,:]
+        #     elif (t >= self.t_wps[-1]):
+        #         self.t_idx = -1
+        #         self.desPos = self.wps[-1,:]
+        #     else:
+        #         self.t_idx = np.where(t <= self.t_wps)[0][0] - 1
+        #         scale = (t - self.t_wps[self.t_idx])/self.T_segment[self.t_idx]
+        #         self.desPos = (1 - scale) * self.wps[self.t_idx,:] + scale * self.wps[self.t_idx + 1,:]
         
         # def pos_waypoint_min():
         #     """ The function takes known number of waypoints and time, then generates a
@@ -215,30 +215,30 @@ class Trajectory:
                 self.current_heading = self.desEul[2]
         
 
-        def yaw_follow():
+        # def yaw_follow():
 
-            if (self.xyzType == 1 or self.xyzType == 2):
-                raise Exception("Function yaw_follow isn't compatible with selected xyzType trajectory")
+        #     if (self.xyzType == 1 or self.xyzType == 2):
+        #         raise Exception("Function yaw_follow isn't compatible with selected xyzType trajectory")
 
-            if (t == 0) or (t >= self.t_wps[-1]):
-                self.desEul[2] = self.y_wps[self.t_idx]
-                self.desYawRate = 0
-            else:
-                # Calculate desired Yaw
-                self.desEul[2] = np.arctan2(self.desVel[1], self.desVel[0])
+        #     if (t == 0) or (t >= self.t_wps[-1]):
+        #         self.desEul[2] = self.y_wps[self.t_idx]
+        #         self.desYawRate = 0
+        #     else:
+        #         # Calculate desired Yaw
+        #         self.desEul[2] = np.arctan2(self.desVel[1], self.desVel[0])
                 
-                # Dirty hack, detect when desEul[2] switches from -pi to pi (or vice-versa) and switch manualy current_heading 
-                if (np.sign(self.desEul[2]) - np.sign(self.current_heading) and abs(self.desEul[2]-self.current_heading) >= 2*pi-0.1):
-                    self.current_heading = self.current_heading + np.sign(self.desEul[2])*2*pi
+        #         # Dirty hack, detect when desEul[2] switches from -pi to pi (or vice-versa) and switch manualy current_heading 
+        #         if (np.sign(self.desEul[2]) - np.sign(self.current_heading) and abs(self.desEul[2]-self.current_heading) >= 2*pi-0.1):
+        #             self.current_heading = self.current_heading + np.sign(self.desEul[2])*2*pi
                 
-                # Angle between current vector with the next heading vector
-                delta_psi = self.desEul[2] - self.current_heading
+        #         # Angle between current vector with the next heading vector
+        #         delta_psi = self.desEul[2] - self.current_heading
                 
-                # Set Yaw rate
-                self.desYawRate = delta_psi / Ts 
+        #         # Set Yaw rate
+        #         self.desYawRate = delta_psi / Ts 
 
-                # Prepare next iteration
-                self.current_heading = self.desEul[2]
+        #         # Prepare next iteration
+        #         self.current_heading = self.desEul[2]
 
 
         if (self.ctrlType == "xyz_vel"):
@@ -276,9 +276,6 @@ class Trajectory:
                 # Interpolate yaw between every waypoint, to arrive at desired yaw every t_wps[i]
                 elif (self.yawType == 2):
                     yaw_waypoint_interp()
-                # Have the drone's heading match its desired velocity direction
-                elif (self.yawType == 3):
-                    yaw_follow()
 
                 self.sDes = np.hstack((self.desPos, self.desVel, self.desAcc, self.desThr, self.desEul, self.desPQR, self.desYawRate)).astype(float)
         
