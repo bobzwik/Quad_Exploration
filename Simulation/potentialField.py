@@ -18,7 +18,7 @@ fieldRadius = 2.5
 class PotField:
 
     def __init__(self):
-        self.pointcloud = np.genfromtxt("./Simulation/test/pointcloud_grid.csv", delimiter=",")
+        self.pointcloud = np.genfromtxt("./Simulation/environmentGeneration/pointcloud_grid.csv", delimiter=",")
 
         self.num_points = len(self.pointcloud)
 

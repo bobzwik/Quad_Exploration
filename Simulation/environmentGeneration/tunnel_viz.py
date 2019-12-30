@@ -15,8 +15,8 @@ from vispy.scene import visuals
 orient = "ENU"
 
 
-pointcloud      = np.genfromtxt("./Simulation/test/pointcloud_fine.csv", delimiter=",")
-pointcloud_filt = np.genfromtxt("./Simulation/test/pointcloud_grid.csv", delimiter=",")
+pointcloud      = np.genfromtxt("./Simulation/environmentGeneration/pointcloud_fine.csv", delimiter=",")
+pointcloud_filt = np.genfromtxt("./Simulation/environmentGeneration/pointcloud_grid.csv", delimiter=",")
 
 center_pc_x = (pointcloud[:,0].max() + pointcloud[:,0].min())/2
 center_pc_y = (pointcloud[:,1].max() + pointcloud[:,1].min())/2
