@@ -126,16 +126,16 @@ class Control:
         # ---------------------------
         if (traj.ctrlType == "xyz_vel"):
             self.saturateVel()
-            self.z_vel_control(quad, Ts)
-            self.xy_vel_control(quad, Ts)
+            self.z_vel_control(quad, potfld, Ts)
+            self.xy_vel_control(quad, potfld, Ts)
             self.thrustToAttitude(quad, potfld, Ts)
             self.attitude_control(quad, Ts)
             self.rate_control(quad, Ts)
         elif (traj.ctrlType == "xy_vel_z_pos"):
             self.z_pos_control(quad, Ts)
             self.saturateVel()
-            self.z_vel_control(quad, Ts)
-            self.xy_vel_control(quad, Ts)
+            self.z_vel_control(quad, potfld, Ts)
+            self.xy_vel_control(quad, potfld, Ts)
             self.thrustToAttitude(quad, potfld, Ts)
             self.attitude_control(quad, Ts)
             self.rate_control(quad, Ts)
@@ -143,8 +143,8 @@ class Control:
             self.z_pos_control(quad, Ts)
             self.xy_pos_control(quad, Ts)
             self.saturateVel()
-            self.z_vel_control(quad, Ts)
-            self.xy_vel_control(quad, Ts)
+            self.z_vel_control(quad, potfld, Ts)
+            self.xy_vel_control(quad, potfld, Ts)
             self.thrustToAttitude(quad, potfld, Ts)
             self.attitude_control(quad, Ts)
             self.rate_control(quad, Ts)
@@ -191,7 +191,7 @@ class Control:
                 self.vel_sp = self.vel_sp/totalVel_sp*velMaxAll
 
 
-    def z_vel_control(self, quad, Ts):
+    def z_vel_control(self, quad, potfld, Ts):
         
         # Z Velocity Control (Thrust in D-direction)
         # ---------------------------
@@ -199,9 +199,9 @@ class Control:
         # allow hover when the position and velocity error are nul
         vel_z_error = self.vel_sp[2] - quad.vel[2]
         if (config.orient == "NED"):
-            thrust_z_sp = vel_P_gain[2]*vel_z_error - vel_D_gain[2]*quad.vel_dot[2] + quad.params["mB"]*(self.acc_sp[2] - quad.params["g"]) + self.thr_int[2]
+            thrust_z_sp = vel_P_gain[2]*vel_z_error - vel_D_gain[2]*quad.vel_dot[2] + quad.params["mB"]*(self.acc_sp[2] - quad.params["g"]) + self.thr_int[2] + potfld.F_rep[2]
         elif (config.orient == "ENU"):
-            thrust_z_sp = vel_P_gain[2]*vel_z_error - vel_D_gain[2]*quad.vel_dot[2] + quad.params["mB"]*(self.acc_sp[2] + quad.params["g"]) + self.thr_int[2]
+            thrust_z_sp = vel_P_gain[2]*vel_z_error - vel_D_gain[2]*quad.vel_dot[2] + quad.params["mB"]*(self.acc_sp[2] + quad.params["g"]) + self.thr_int[2] + potfld.F_rep[2]
         
         # Get thrust limits
         if (config.orient == "NED"):
@@ -225,12 +225,12 @@ class Control:
         self.thrust_sp[2] = np.clip(thrust_z_sp, uMin, uMax)
 
     
-    def xy_vel_control(self, quad, Ts):
+    def xy_vel_control(self, quad, potfld, Ts):
         
         # XY Velocity Control (Thrust in NE-direction)
         # ---------------------------
         vel_xy_error = self.vel_sp[0:2] - quad.vel[0:2]
-        thrust_xy_sp = vel_P_gain[0:2]*vel_xy_error - vel_D_gain[0:2]*quad.vel_dot[0:2] + quad.params["mB"]*(self.acc_sp[0:2]) + self.thr_int[0:2]
+        thrust_xy_sp = vel_P_gain[0:2]*vel_xy_error - vel_D_gain[0:2]*quad.vel_dot[0:2] + quad.params["mB"]*(self.acc_sp[0:2]) + self.thr_int[0:2] + potfld.F_rep[0:2]
 
         # Max allowed thrust in NE based on tilt and excess thrust
         thrust_max_xy_tilt = abs(self.thrust_sp[2])*np.tan(tiltMax)
@@ -255,7 +255,7 @@ class Control:
         # ---------------------------
 
         # Add potential field repulsive force to Thrust setpoint
-        self.thrust_rep_sp = self.thrust_sp + potfld.F_rep
+        self.thrust_rep_sp = self.thrust_sp
 
         # Yaw setpoint
         yaw_sp = self.eul_sp[2]

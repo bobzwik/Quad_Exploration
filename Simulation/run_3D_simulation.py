@@ -166,7 +166,7 @@ def main():
     # ---------------------------
 
     utils.makeFigures(quad.params, t_all, pos_all, vel_all, quat_all, omega_all, euler_all, w_cmd_all, wMotor_all, thr_all, tor_all, sDes_traj_all, sDes_calc_all, potfld, minDist_all)
-    utils.sameAxisAnimation(t_all, traj.wps, pos_all, quat_all, sDes_traj_all, Ts, quad.params, traj.xyzType, traj.yawType, potfld, notInRange_all, inRange_all, inField_all, ifsave)
+    utils.sameAxisAnimation(t_all, traj.wps, pos_all, quat_all, euler_all, sDes_traj_all, Ts, quad.params, traj.xyzType, traj.yawType, potfld, notInRange_all, inRange_all, inField_all, ifsave)
     plt.show()
 
 if __name__ == "__main__":
