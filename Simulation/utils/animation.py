@@ -20,7 +20,6 @@ rad2deg = 180.0/pi
 deg2rad = pi/180.0
 
 def sameAxisAnimation(t_all, waypoints, pos_all, quat_all, euler_all, sDes_tr_all, Ts, params, xyzType, yawType, potfld, notInRange_all, inRange_all, inField_all, ifsave):
-    # print(vispy.sys_info())
     
     x = pos_all[:,0]
     y = pos_all[:,1]

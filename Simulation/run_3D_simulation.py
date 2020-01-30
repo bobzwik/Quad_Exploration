@@ -61,11 +61,11 @@ def main():
     # Select Control Type             (0: xyz_pos,       1: xy_vel_z_pos,            2: xyz_vel)
     ctrlType = ctrlOptions[0]   
     # Select Position Trajectory Type (0: hover,         1: pos_waypoint_timed,      2: pos_waypoint_arrived
-    trajSelect[0] = 2       
-    # Select Yaw Trajectory Type      (0: none,          1: yaw_waypoint_timed,      2: yaw_waypoint_interp,       3: zero)
-    trajSelect[1] = 3           
+    trajSelect[0] = 2
+    # Select Yaw Trajectory Type      (0: none,          1: yaw_waypoint_timed,      2: yaw_waypoint_interp,       3: zero,       4: Follow)
+    trajSelect[1] = 4
     # Select if waypoint time is used, or if average speed is used to calculate waypoint time   (0: waypoint time,   1: average speed)
-    trajSelect[2] = 0           
+    trajSelect[2] = 0
     print("Control type: {}".format(ctrlType))
 
     # Initialize Quadcopter, Controller, Wind, Result Matrixes
@@ -128,7 +128,7 @@ def main():
     notInRange_all[0,:] = potfld.notWithinRange
     inRange_all[0,:]    = potfld.inRangeNotField
     inField_all[0,:]    = potfld.withinField
-    minDist_all[0]    = potfld.distanceMin
+    minDist_all[0]      = potfld.distanceMin
 
     # Run Simulation
     # ---------------------------

@@ -84,9 +84,9 @@ saturateVel_separetely = False
 tiltMax = 50.0*deg2rad
 
 # Max Rate
-pMax = 200.0*deg2rad
-qMax = 200.0*deg2rad
-rMax = 150.0*deg2rad
+pMax = 100.0*deg2rad
+qMax = 100.0*deg2rad
+rMax = 100.0*deg2rad
 
 rateMax = np.array([pMax, qMax, rMax])
 
@@ -107,7 +107,7 @@ class Control:
         self.thrust_rep_sp = np.zeros(3)
         self.eul_sp        = np.zeros(3)
         self.pqr_sp        = np.zeros(3)
-        self.yawFF         = np.zeros(3)
+        self.yawFF         = 0.
 
     
     def controller(self, traj, quad, sDes, potfld, Ts):
@@ -120,8 +120,8 @@ class Control:
         self.thrust_sp[:] = traj.sDes[9:12]
         self.eul_sp[:]    = traj.sDes[12:15]
         self.pqr_sp[:]    = traj.sDes[15:18]
-        self.yawFF[:]     = traj.sDes[18]
-        
+        self.yawFF        = traj.sDes[18]
+
         # Select Controller
         # ---------------------------
         if (traj.ctrlType == "xyz_vel"):
@@ -143,8 +143,9 @@ class Control:
             self.z_pos_control(quad, potfld, Ts)
             self.xy_pos_control(quad, potfld, Ts)
             self.saturateVel()
-            self.addFrep(potfld)
+            self.addFrepToVel(potfld)
             self.saturateVel()
+            self.yaw_follow(traj, Ts)
             self.z_vel_control(quad, potfld, Ts)
             self.xy_vel_control(quad, potfld, Ts)
             self.thrustToAttitude(quad, potfld, Ts)
@@ -157,11 +158,11 @@ class Control:
         
         # Add calculated Desired States
         # ---------------------------         
-        self.sDesCalc[0:3] = self.pos_sp
-        self.sDesCalc[3:6] = self.vel_sp
-        self.sDesCalc[6:9] = self.thrust_sp
-        self.sDesCalc[9:13] = self.qd
-        self.sDesCalc[13:16] = self.rate_sp
+        self.sDesCalc[0:3][:] = self.pos_sp
+        self.sDesCalc[3:6][:] = self.vel_sp
+        self.sDesCalc[6:9][:] = self.thrust_sp
+        self.sDesCalc[9:13][:] = self.qd
+        self.sDesCalc[13:16][:] = self.rate_sp
 
 
     def z_pos_control(self, quad, potfld, Ts):
@@ -192,9 +193,31 @@ class Control:
             if (totalVel_sp > velMaxAll):
                 self.vel_sp = self.vel_sp/totalVel_sp*velMaxAll
     
-    def addFrep(self, potfld):
+    
+    def addFrepToVel(self, potfld):
 
         self.vel_sp += potfld.pfVel*potfld.F_rep
+
+    def yaw_follow(self, traj, Ts):
+
+            if (traj.yawType == 4):
+                totalVel_sp = norm(self.vel_sp)
+                if (totalVel_sp > 0.1):
+                    # Calculate desired Yaw
+                    self.eul_sp[2] = np.arctan2(self.vel_sp[1], self.vel_sp[0])
+                
+                    # Dirty hack, detect when desEul[2] switches from -pi to pi (or vice-versa) and switch manualy current_heading 
+                    if (np.sign(self.eul_sp[2]) - np.sign(traj.current_heading) and abs(self.eul_sp[2]-traj.current_heading) >= 2*pi-0.1):
+                        traj.current_heading = traj.current_heading + np.sign(self.eul_sp[2])*2*pi
+                
+                    # Angle between current vector with the next heading vector
+                    delta_psi = self.eul_sp[2] - traj.current_heading
+                
+                    # Set Yaw rate
+                    self.yawFF = delta_psi / Ts 
+
+                    # Prepare next iteration
+                    traj.current_heading = self.eul_sp[2]
 
 
     def z_vel_control(self, quad, potfld, Ts):
