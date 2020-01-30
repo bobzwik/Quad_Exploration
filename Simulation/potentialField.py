@@ -17,7 +17,7 @@ fieldRadius = 2.5
 
 class PotField:
 
-    def __init__(self):
+    def __init__(self, pfType):
         self.pointcloud = np.genfromtxt("./Simulation/environmentGeneration/pointcloud_grid.csv", delimiter=",")
 
         self.num_points = len(self.pointcloud)
@@ -40,6 +40,17 @@ class PotField:
 
         self.force = np.zeros(3)
         self.vel   = np.zeros(3)
+
+        self.pfVel = 0
+        self.pfSatFor = 0
+        self.pfFor = 0
+        if (pfType == 1):
+            self.pfVel = 1
+        elif (pfType == 2):
+            self.pfSatFor = 1
+        elif (pfType == 3):
+            self.pfFor = 0
+
     
     def isWithinRange(self, quad):
         self.withinRange = (abs(quad.pos[0]-self.pointcloud[:,0]) <= rangeRadius) & \
@@ -72,11 +83,9 @@ class PotField:
         self.fieldDistance = distance[np.where(withinField)[0]]
 
     def rep_force(self, quad):
-        k = 2
+        k = 0.4
         F_rep_x = k*(1/self.fieldDistance - 1/fieldRadius)*(1/(self.fieldDistance**2))*(quad.pos[0] - self.fieldPointcloud[:,0])/self.fieldDistance
         F_rep_y = k*(1/self.fieldDistance - 1/fieldRadius)*(1/(self.fieldDistance**2))*(quad.pos[1] - self.fieldPointcloud[:,1])/self.fieldDistance
         F_rep_z = k*(1/self.fieldDistance - 1/fieldRadius)*(1/(self.fieldDistance**2))*(quad.pos[2] - self.fieldPointcloud[:,2])/self.fieldDistance
 
-        self.F_rep = np.array([np.sum(F_rep_x), np.sum(F_rep_y), np.sum(F_rep_z)])
-        # self.F_rep = np.array([0,0,0])
-        
+        self.F_rep = np.array([np.sum(F_rep_x), np.sum(F_rep_y), np.sum(F_rep_z)])        

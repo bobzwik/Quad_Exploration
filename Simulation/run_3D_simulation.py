@@ -50,7 +50,7 @@ def main():
     # --------------------------- 
     Ti = 0
     Ts = 0.005
-    Tf = 70
+    Tf = 85
     ifsave = 0
 
     # Choose trajectory settings
@@ -72,7 +72,7 @@ def main():
     # ---------------------------
     quad = Quadcopter(Ti)
     traj = Trajectory(quad, ctrlType, trajSelect)
-    potfld = PotField()
+    potfld = PotField(1)
     ctrl = Control(quad, traj.yawType)
     wind = Wind('None', 2.0, 90, -15)
 
