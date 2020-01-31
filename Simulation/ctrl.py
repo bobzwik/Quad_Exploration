@@ -145,9 +145,9 @@ class Control:
             self.saturateVel()
             self.addFrepToVel(potfld)
             self.saturateVel()
-            self.yaw_follow(traj, Ts)
             self.z_vel_control(quad, potfld, Ts)
             self.xy_vel_control(quad, potfld, Ts)
+            self.yaw_follow(traj, Ts)
             self.thrustToAttitude(quad, potfld, Ts)
             self.attitude_control(quad, Ts)
             self.rate_control(quad, Ts)
@@ -196,28 +196,32 @@ class Control:
     
     def addFrepToVel(self, potfld):
 
+        # Add repulsive force "velocity" to velocity setpoint
         self.vel_sp += potfld.pfVel*potfld.F_rep
 
     def yaw_follow(self, traj, Ts):
+        
+        # Generate Yaw setpoint and FF
+        # ---------------------------
+        # If yawType == "Follow", then set Yaw setpoint and Yaw Rate Feed-Forward to follow the velocity setpoint
+        if (traj.yawType == 4):
+            totalVel_sp = norm(self.vel_sp)
+            if (totalVel_sp > 0.1):
+                # Calculate desired Yaw
+                self.eul_sp[2] = np.arctan2(self.vel_sp[1], self.vel_sp[0])
+            
+                # Dirty hack, detect when desEul[2] switches from -pi to pi (or vice-versa) and switch manualy current_heading 
+                if (np.sign(self.eul_sp[2]) - np.sign(traj.current_heading) and abs(self.eul_sp[2]-traj.current_heading) >= 2*pi-0.1):
+                    traj.current_heading = traj.current_heading + np.sign(self.eul_sp[2])*2*pi
+            
+                # Angle between current vector with the next heading vector
+                delta_psi = self.eul_sp[2] - traj.current_heading
+            
+                # Set Yaw rate
+                self.yawFF = delta_psi / Ts 
 
-            if (traj.yawType == 4):
-                totalVel_sp = norm(self.vel_sp)
-                if (totalVel_sp > 0.1):
-                    # Calculate desired Yaw
-                    self.eul_sp[2] = np.arctan2(self.vel_sp[1], self.vel_sp[0])
-                
-                    # Dirty hack, detect when desEul[2] switches from -pi to pi (or vice-versa) and switch manualy current_heading 
-                    if (np.sign(self.eul_sp[2]) - np.sign(traj.current_heading) and abs(self.eul_sp[2]-traj.current_heading) >= 2*pi-0.1):
-                        traj.current_heading = traj.current_heading + np.sign(self.eul_sp[2])*2*pi
-                
-                    # Angle between current vector with the next heading vector
-                    delta_psi = self.eul_sp[2] - traj.current_heading
-                
-                    # Set Yaw rate
-                    self.yawFF = delta_psi / Ts 
-
-                    # Prepare next iteration
-                    traj.current_heading = self.eul_sp[2]
+                # Prepare next iteration
+                traj.current_heading = self.eul_sp[2]
 
 
     def z_vel_control(self, quad, potfld, Ts):
