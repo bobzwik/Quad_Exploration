@@ -145,9 +145,9 @@ class Control:
             self.saturateVel()
             self.addFrepToVel(potfld)
             self.saturateVel()
+            self.yaw_follow(traj, Ts)
             self.z_vel_control(quad, potfld, Ts)
             self.xy_vel_control(quad, potfld, Ts)
-            self.yaw_follow(traj, Ts)
             self.thrustToAttitude(quad, potfld, Ts)
             self.attitude_control(quad, Ts)
             self.rate_control(quad, Ts)
@@ -198,6 +198,7 @@ class Control:
 
         # Add repulsive force "velocity" to velocity setpoint
         self.vel_sp += potfld.pfVel*potfld.F_rep
+
 
     def yaw_follow(self, traj, Ts):
         

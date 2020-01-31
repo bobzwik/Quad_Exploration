@@ -99,6 +99,7 @@ def sameAxisAnimation(t_all, waypoints, pos_all, quat_all, euler_all, sDes_tr_al
         z_from0 = pos_all[0:i*numFrames,2]
 
         psi = euler_all[i*numFrames,2]*rad2deg
+        psi_diff = (euler_all[i*numFrames,2]-euler_all[(i-1)*numFrames,2])*rad2deg
 
         dxm = params["dxm"]
         dym = params["dym"]
@@ -121,7 +122,7 @@ def sameAxisAnimation(t_all, waypoints, pos_all, quat_all, euler_all, sDes_tr_al
         line2.set_data(np.array([motorPoints[0,3:6], motorPoints[1,3:6], motorPoints[2,3:6]]).T, marker_size=0,)
         line3.set_data(np.array([x_from0, y_from0, z_from0]).T, marker_size=0)
 
-        view.camera.azimuth = -90-psi
+        view.camera.azimuth = view.camera.azimuth-psi_diff
         view.camera.center = [x,y,z]
         scatter.set_data(pointcloud[np.where(notInRange_all[i*numFrames,:])[0]], edge_color=None, face_color=(1, 1, 0, 0.7), size=6)
         scatterInRange.set_data(pointcloud[np.where(inRange_all[i*numFrames,:])[0]], edge_color=None, face_color=(0, 1, 0, 0.7), size=6)
