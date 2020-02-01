@@ -61,27 +61,23 @@ def sameAxisAnimation(t_all, waypoints, pos_all, quat_all, euler_all, sDes_tr_al
         flip = view.camera.flip
         view.camera.flip = flip[0], not flip[1], flip[2] # Flip camera in Y axis
 
+    # Create color array
+    colors = np.ones((potfld.num_points, 4), dtype=np.float32)
+    colors[np.where(notInRange_all[0,:])[0]] = np.array([1, 1, 0, 0.7])
+    colors[np.where(inRange_all[0,:])[0]] = np.array([0, 1, 0, 0.7])
+    colors[np.where(inField_all[0,:])[0]] = np.array([1, 0, 0, 0.7])
+
     # create scatter object and fill in the data
     scatter = visuals.Markers()
-    scatter.set_data(pointcloud[np.where(notInRange_all[0,:])[0]], edge_color=None, face_color=(1, 1, 0, 0.7), size=6)
+    scatter.set_data(pointcloud, edge_color=None, face_color=colors, size=6)
     # scatter.set_gl_state('translucent', cull_face=False)
     view.add(scatter)
-
-    scatterInRange = visuals.Markers()
-    scatterInRange.set_data(pointcloud[np.where(inRange_all[0,:])[0]], edge_color=None, face_color=(0, 1, 0, 0.7), size=6)
-    # scatter.set_gl_state('translucent', cull_face=False)
-    view.add(scatterInRange)
-
-    scatterInField = visuals.Markers()
-    scatterInField.set_data(pointcloud[np.where(inField_all[0,:])[0]], edge_color=None, face_color=(1, 0, 0, 0.7), size=6)
-    # scatter.set_gl_state('translucent', cull_face=False)
-    view.add(scatterInField)
 
     # add a colored 3D axis for orientation
     axis = visuals.XYZAxis(parent=view.scene)
 
-    line1 = Plot3D1([[],[],[]], width=3, color='red', marker_size=0, parent=view.scene)
-    line2 = Plot3D2([[],[],[]], width=3, color='blue', marker_size=0, parent=view.scene)
+    line1 = Plot3D1([[],[],[]], width=6, color='red', marker_size=0, parent=view.scene)
+    line2 = Plot3D2([[],[],[]], width=6, color='blue', marker_size=0, parent=view.scene)
     line3 = Plot3D3([[],[],[]], width=2, color='red', marker_size=0, parent=view.scene)
 
     i = 1
@@ -98,7 +94,6 @@ def sameAxisAnimation(t_all, waypoints, pos_all, quat_all, euler_all, sDes_tr_al
         y_from0 = pos_all[0:i*numFrames,1]
         z_from0 = pos_all[0:i*numFrames,2]
 
-        psi = euler_all[i*numFrames,2]*rad2deg
         psi_diff = (euler_all[i*numFrames,2]-euler_all[(i-1)*numFrames,2])*rad2deg
 
         dxm = params["dxm"]
@@ -124,10 +119,11 @@ def sameAxisAnimation(t_all, waypoints, pos_all, quat_all, euler_all, sDes_tr_al
 
         view.camera.azimuth = view.camera.azimuth-psi_diff
         view.camera.center = [x,y,z]
-        scatter.set_data(pointcloud[np.where(notInRange_all[i*numFrames,:])[0]], edge_color=None, face_color=(1, 1, 0, 0.7), size=6)
-        scatterInRange.set_data(pointcloud[np.where(inRange_all[i*numFrames,:])[0]], edge_color=None, face_color=(0, 1, 0, 0.7), size=6)
-        scatterInField.set_data(pointcloud[np.where(inField_all[i*numFrames,:])[0]], edge_color=None, face_color=(1, 0, 0, 0.7), size=6)
-
+        colors[np.where(notInRange_all[i*numFrames,:])[0]] = np.array([1, 1, 0, 0.7])
+        colors[np.where(inRange_all[i*numFrames,:])[0]] = np.array([0, 1, 0, 0.7])
+        colors[np.where(inField_all[i*numFrames,:])[0]] = np.array([1, 0, 0, 0.7])
+        scatter.set_data(pointcloud, edge_color=None, face_color=colors, size=6)
+        
         i += 1
 
     timer = app.Timer(Ts*numFrames)
