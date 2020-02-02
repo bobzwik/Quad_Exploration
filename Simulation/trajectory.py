@@ -175,7 +175,7 @@ class Trajectory:
 
                 self.sDes = np.hstack((self.desPos, self.desVel, self.desAcc, self.desThr, self.desEul, self.desPQR, self.desYawRate)).astype(float)
         
-        return self.sDes
+        # return self.sDes
 
 
 

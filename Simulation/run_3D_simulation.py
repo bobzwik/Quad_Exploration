@@ -28,7 +28,7 @@ def quad_sim(t, Ts, quad, ctrl, wind, traj, potfld):
 
     # Trajectory for Desired States 
     # ---------------------------
-    sDes = traj.desiredState(t, Ts, quad)
+    traj.desiredState(t, Ts, quad)
 
     # Potential Field Influence 
     # ---------------------------     
@@ -38,7 +38,7 @@ def quad_sim(t, Ts, quad, ctrl, wind, traj, potfld):
 
     # Generate Commands (for next iteration)
     # ---------------------------
-    ctrl.controller(traj, quad, sDes, potfld, Ts)
+    ctrl.controller(traj, quad, potfld, Ts)
 
     return t
     
@@ -78,7 +78,7 @@ def main():
 
     # Trajectory for First Desired States
     # ---------------------------
-    sDes = traj.desiredState(0, Ts, quad) 
+    traj.desiredState(0, Ts, quad) 
 
     # First Potential Field Calculation
     # ---------------------------
@@ -88,7 +88,7 @@ def main():
 
     # Generate First Commands
     # ---------------------------
-    ctrl.controller(traj, quad, sDes, potfld, Ts)
+    ctrl.controller(traj, quad, potfld, Ts)
     
     # Initialize Result Matrixes
     # ---------------------------

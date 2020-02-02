@@ -110,7 +110,7 @@ class Control:
         self.yawFF         = 0.
 
     
-    def controller(self, traj, quad, sDes, potfld, Ts):
+    def controller(self, traj, quad, potfld, Ts):
 
         # Desired State (Create a copy, hence the [:])
         # ---------------------------

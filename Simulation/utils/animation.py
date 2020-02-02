@@ -126,7 +126,7 @@ def sameAxisAnimation(t_all, waypoints, pos_all, quat_all, euler_all, sDes_tr_al
         
         i += 1
 
-    timer = app.Timer(Ts*numFrames)
+    timer = app.Timer()
     timer.connect(update)
     timer.start(iterations=len(x)/numFrames-1)
 
