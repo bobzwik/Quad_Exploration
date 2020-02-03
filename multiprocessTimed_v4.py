@@ -22,20 +22,20 @@ class Timer(Process):
         self.finished.set()
 
     def run(self):
+        startTimeProcess = time.perf_counter()
         if self.timed:
-            startTimeProcess = time.perf_counter()
             while self.iterationLeft > 0:
                 startTimePeriod = time.perf_counter()
                 self.function(*self.args, **self.kwargs)
                 # print(self.interval-(time.clock() - startTimePeriod))
                 self.finished.wait(self.interval-(time.perf_counter() - startTimePeriod) + self.correction)
                 self.iterationLeft -= 1
-                self.correction = min(0, self.interval-(time.perf_counter() - startTimePeriod))
-            print(f'Process finished in {round(time.perf_counter()-startTimeProcess, 5)} seconds')
+                self.correction = min(0, self.interval-(time.perf_counter() - startTimePeriod))  # Dirty hack to reduce next wait time if this period took too long
         else:
             while self.iterationLeft > 0:
                 self.function(*self.args, **self.kwargs)
                 self.iterationLeft -= 1
+        print(f'Process finished in {round(time.perf_counter()-startTimeProcess, 5)} seconds')
 
 class Quadcopter():
     def __init__(self):
@@ -49,7 +49,8 @@ class Quadcopter():
         while tick_p1.value == 4:
             pass
         simTime = Ts*t.value
-
+        # print(round(simTime,3))
+        
         # Add fake computational time depending on the frequency of the process
         # print(f'id: {id} at {freq} Hz') 
         if freq == 400:
@@ -63,7 +64,7 @@ class Quadcopter():
         
         self.pos += 1
 
-        # Increment tick_p2
+        # Increment tick_p2 and tick_p1
         t.value += 1
         tick_p1.value += 1
         tick_p2.value += 1
@@ -107,7 +108,10 @@ def func1(id, freq, tick_p2):
 
 def func2(id, freq, tick_p2):
     # Wait for tick_p2 to have been reset by Process1
-    while tick_p2.value >= 2:
+    while tick_p2.value == 2:
+        pass
+    # Wait for tick_p1 to have been reset by Process0
+    while tick_p1.value == 4:
         pass
     
     # Add fake computational time depending on the frequency of the process
@@ -121,13 +125,15 @@ def func2(id, freq, tick_p2):
     elif freq == 50:
         time.sleep(0.015)
 
-    # Increment tick_p2
+    # Increment tick_p2 and tick_p1
+    tick_p1.value += 1
     tick_p2.value += 1
 
     
 
 if __name__ == '__main__':
     freqs = [50,100,200]
+    # freqs = [100,200,400]
     # freqs = [0.25,0.5,1]
     Tf = 10
     Ts = 1/freqs[-1]
