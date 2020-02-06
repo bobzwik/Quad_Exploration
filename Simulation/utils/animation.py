@@ -20,6 +20,19 @@ numFrames = 10
 rad2deg = 180.0/pi
 deg2rad = pi/180.0
 
+# class ColorMarkers(visuals.Markers):
+#     def __init__(self, **kwargs):
+#         super().__init__(**kwargs)
+    
+#     def set_color(self, face_color='white'):
+#         face_color = ColorArray(face_color).rgba
+#         if len(face_color) == 1:
+#             face_color = face_color[0]
+
+#         self._data['a_bg_color'] = face_color
+#         self.update()
+
+
 def sameAxisAnimation(t_all, waypoints, pos_all, quat_all, euler_all, sDes_tr_all, Ts, params, xyzType, yawType, potfld, notInRange_all, inRange_all, inField_all, ifsave):
     
     x = pos_all[:,0]
