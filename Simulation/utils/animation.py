@@ -11,6 +11,7 @@ from numpy import pi
 import vispy
 from vispy import app, scene
 from vispy.scene import visuals
+from vispy.color import ColorArray
 import time
 
 import utils
@@ -20,17 +21,19 @@ numFrames = 10
 rad2deg = 180.0/pi
 deg2rad = pi/180.0
 
-# class ColorMarkers(visuals.Markers):
-#     def __init__(self, **kwargs):
-#         super().__init__(**kwargs)
+class ColorMarkers(visuals.Markers):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
     
-#     def set_color(self, face_color='white'):
-#         face_color = ColorArray(face_color).rgba
-#         if len(face_color) == 1:
-#             face_color = face_color[0]
+    def set_color(self, face_color='white'):
+        face_color = ColorArray(face_color).rgba
+        if len(face_color) == 1:
+            face_color = face_color[0]
 
-#         self._data['a_bg_color'] = face_color
-#         self.update()
+        self._data['a_bg_color'] = face_color
+        self._vbo.set_data(self._data)
+        # self.shared_program.bind(self._vbo)
+        self.update()
 
 
 def sameAxisAnimation(t_all, waypoints, pos_all, quat_all, euler_all, sDes_tr_all, Ts, params, xyzType, yawType, potfld, notInRange_all, inRange_all, inField_all, ifsave):
@@ -82,7 +85,7 @@ def sameAxisAnimation(t_all, waypoints, pos_all, quat_all, euler_all, sDes_tr_al
     colors[np.where(inField_all[0,:])[0]] = np.array([1, 0, 0, 0.7])
 
     # create scatter object and fill in the data
-    scatter = visuals.Markers()
+    scatter = ColorMarkers()
     scatter.set_data(pointcloud, edge_color=None, face_color=colors, size=6)
     # scatter.set_gl_state('translucent', cull_face=False)
     view.add(scatter)
@@ -99,14 +102,14 @@ def sameAxisAnimation(t_all, waypoints, pos_all, quat_all, euler_all, sDes_tr_al
 
     def update(ev):
         nonlocal i
-        time = t_all[i*numFrames]
+        Simtime = t_all[i*numFrames]
         pos = pos_all[i*numFrames]
         x = pos[0]
         y = pos[1]
         z = pos[2]
-        x_from0 = pos_all[0:i*numFrames,0]
-        y_from0 = pos_all[0:i*numFrames,1]
-        z_from0 = pos_all[0:i*numFrames,2]
+        x_from0 = pos_all[0:i*numFrames+1,0]
+        y_from0 = pos_all[0:i*numFrames+1,1]
+        z_from0 = pos_all[0:i*numFrames+1,2]
 
         if (i==0):
             psi_diff = 0
@@ -139,11 +142,13 @@ def sameAxisAnimation(t_all, waypoints, pos_all, quat_all, euler_all, sDes_tr_al
         colors[np.where(notInRange_all[i*numFrames,:])[0]] = np.array([1, 1, 0, 0.7])
         colors[np.where(inRange_all[i*numFrames,:])[0]] = np.array([0, 1, 0, 0.7])
         colors[np.where(inField_all[i*numFrames,:])[0]] = np.array([1, 0, 0, 0.7])
-        scatter.set_data(pointcloud, edge_color=None, face_color=colors, size=6)
+        # scatter.set_data(pointcloud, edge_color=None, face_color=colors, size=6)
+        scatter.set_color(face_color=colors)
+
         i += 1
     
     
-    timer = app.Timer()
+    timer = app.Timer(0.001)
     timer.connect(update)
     timer.start(iterations=len(x)/numFrames-1)
 
