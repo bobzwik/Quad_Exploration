@@ -11,6 +11,7 @@ from numpy import pi
 import vispy
 from vispy import app, scene
 from vispy.scene import visuals
+import time
 
 import utils
 import config
@@ -80,7 +81,7 @@ def sameAxisAnimation(t_all, waypoints, pos_all, quat_all, euler_all, sDes_tr_al
     line2 = Plot3D2([[],[],[]], width=6, color='blue', marker_size=0, parent=view.scene)
     line3 = Plot3D3([[],[],[]], width=2, color='red', marker_size=0, parent=view.scene)
 
-    i = 1
+    i = 0
 
 
     def update(ev):
@@ -94,7 +95,10 @@ def sameAxisAnimation(t_all, waypoints, pos_all, quat_all, euler_all, sDes_tr_al
         y_from0 = pos_all[0:i*numFrames,1]
         z_from0 = pos_all[0:i*numFrames,2]
 
-        psi_diff = (euler_all[i*numFrames,2]-euler_all[(i-1)*numFrames,2])*rad2deg
+        if (i==0):
+            psi_diff = 0
+        else:
+            psi_diff = (euler_all[i*numFrames,2]-euler_all[(i-1)*numFrames,2])*rad2deg
 
         dxm = params["dxm"]
         dym = params["dym"]
@@ -123,9 +127,9 @@ def sameAxisAnimation(t_all, waypoints, pos_all, quat_all, euler_all, sDes_tr_al
         colors[np.where(inRange_all[i*numFrames,:])[0]] = np.array([0, 1, 0, 0.7])
         colors[np.where(inField_all[i*numFrames,:])[0]] = np.array([1, 0, 0, 0.7])
         scatter.set_data(pointcloud, edge_color=None, face_color=colors, size=6)
-        
         i += 1
-
+    
+    
     timer = app.Timer()
     timer.connect(update)
     timer.start(iterations=len(x)/numFrames-1)
@@ -133,3 +137,4 @@ def sameAxisAnimation(t_all, waypoints, pos_all, quat_all, euler_all, sDes_tr_al
     import sys
     if sys.flags.interactive != 1:
         vispy.app.run()
+
