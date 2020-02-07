@@ -98,29 +98,35 @@ def sameAxisAnimation(t_all, waypoints, pos_all, quat_all, euler_all, sDes_tr_al
     line3 = Plot3D3([[],[],[]], width=2, color='red', marker_size=0, parent=view.scene)
 
     i = 0
+    idx_prev = 0
 
+    startTime = time.perf_counter()
+    def update():
+        # nonlocal i
+        nonlocal idx_prev
+        currentTime = time.perf_counter()-startTime
 
-    def update(ev):
-        nonlocal i
-        Simtime = t_all[i*numFrames]
-        pos = pos_all[i*numFrames]
+        idx_now = np.argmax(t_all > currentTime)
+        # print(idx_now)
+        Simtime = t_all[idx_now]
+        pos = pos_all[idx_now]
         x = pos[0]
         y = pos[1]
         z = pos[2]
-        x_from0 = pos_all[0:i*numFrames+1,0]
-        y_from0 = pos_all[0:i*numFrames+1,1]
-        z_from0 = pos_all[0:i*numFrames+1,2]
+        x_from0 = pos_all[0:idx_now+1,0]
+        y_from0 = pos_all[0:idx_now+1,1]
+        z_from0 = pos_all[0:idx_now+1,2]
 
-        if (i==0):
+        if (idx_now==0):
             psi_diff = 0
         else:
-            psi_diff = (euler_all[i*numFrames,2]-euler_all[(i-1)*numFrames,2])*rad2deg
+            psi_diff = (euler_all[idx_now,2]-euler_all[idx_prev,2])*rad2deg
 
         dxm = params["dxm"]
         dym = params["dym"]
         dzm = params["dzm"]
         
-        quat = quat_all[i*numFrames]
+        quat = quat_all[idx_now]
     
         if (config.orient == "NED"):
             z = -z
@@ -139,18 +145,23 @@ def sameAxisAnimation(t_all, waypoints, pos_all, quat_all, euler_all, sDes_tr_al
 
         view.camera.azimuth = view.camera.azimuth-psi_diff
         view.camera.center = [x,y,z]
-        colors[np.where(notInRange_all[i*numFrames,:])[0]] = np.array([1, 1, 0, 0.7])
-        colors[np.where(inRange_all[i*numFrames,:])[0]] = np.array([0, 1, 0, 0.7])
-        colors[np.where(inField_all[i*numFrames,:])[0]] = np.array([1, 0, 0, 0.7])
+        colors[np.where(notInRange_all[idx_now,:])[0]] = np.array([1, 1, 0, 0.7])
+        colors[np.where(inRange_all[idx_now,:])[0]] = np.array([0, 1, 0, 0.7])
+        colors[np.where(inField_all[idx_now,:])[0]] = np.array([1, 0, 0, 0.7])
         # scatter.set_data(pointcloud, edge_color=None, face_color=colors, size=6)
         scatter.set_color(face_color=colors)
+        canvas.app.process_events()
 
-        i += 1
-    
-    
-    timer = app.Timer(0.001)
-    timer.connect(update)
-    timer.start(iterations=len(x)/numFrames-1)
+        idx_prev = idx_now
+
+        # i += 1
+
+    while True:
+        update()
+
+    # timer = app.Timer(0.001)
+    # timer.connect(update)
+    # timer.start(iterations=len(x)/numFrames-1)
 
     import sys
     if sys.flags.interactive != 1:
