@@ -97,73 +97,68 @@ def sameAxisAnimation(t_all, waypoints, pos_all, quat_all, euler_all, sDes_tr_al
     line2 = Plot3D2([[],[],[]], width=6, color='blue', marker_size=0, parent=view.scene)
     line3 = Plot3D3([[],[],[]], width=2, color='red', marker_size=0, parent=view.scene)
 
-    i = 0
+    runAni = True
     idx_prev = 0
 
     startTime = time.perf_counter()
+    
     def update():
-        # nonlocal i
         nonlocal idx_prev
         currentTime = time.perf_counter()-startTime
 
         idx_now = np.argmax(t_all > currentTime)
-        # print(idx_now)
-        Simtime = t_all[idx_now]
-        pos = pos_all[idx_now]
-        x = pos[0]
-        y = pos[1]
-        z = pos[2]
-        x_from0 = pos_all[0:idx_now+1,0]
-        y_from0 = pos_all[0:idx_now+1,1]
-        z_from0 = pos_all[0:idx_now+1,2]
-
-        if (idx_now==0):
-            psi_diff = 0
+        if (idx_now == 0 and idx_prev > 0):
+            return False
         else:
-            psi_diff = (euler_all[idx_now,2]-euler_all[idx_prev,2])*rad2deg
+            Simtime = t_all[idx_now]
+            pos = pos_all[idx_now]
+            x = pos[0]
+            y = pos[1]
+            z = pos[2]
+            x_from0 = pos_all[0:idx_now+1,0]
+            y_from0 = pos_all[0:idx_now+1,1]
+            z_from0 = pos_all[0:idx_now+1,2]
 
-        dxm = params["dxm"]
-        dym = params["dym"]
-        dzm = params["dzm"]
+            if (idx_now==0):
+                psi_diff = 0
+            else:
+                psi_diff = (euler_all[idx_now,2]-euler_all[idx_prev,2])*rad2deg
+
+            dxm = params["dxm"]
+            dym = params["dym"]
+            dzm = params["dzm"]
+            
+            quat = quat_all[idx_now]
         
-        quat = quat_all[idx_now]
-    
-        if (config.orient == "NED"):
-            z = -z
-            z_from0 = -z_from0
-            quat = np.array([quat[0], -quat[1], -quat[2], quat[3]])
-    
-        R = utils.quat2Dcm(quat)    
-        motorPoints = np.array([[dxm, -dym, dzm], [0, 0, 0], [dxm, dym, dzm], [-dxm, dym, dzm], [0, 0, 0], [-dxm, -dym, dzm]])
-        motorPoints = np.dot(R, np.transpose(motorPoints))
-        motorPoints[0,:] = motorPoints[0,:] + x 
-        motorPoints[1,:] = motorPoints[1,:] + y 
-        motorPoints[2,:] = motorPoints[2,:] + z 
-        line1.set_data(np.array([motorPoints[0,0:3], motorPoints[1,0:3], motorPoints[2,0:3]]).T, marker_size=0,)
-        line2.set_data(np.array([motorPoints[0,3:6], motorPoints[1,3:6], motorPoints[2,3:6]]).T, marker_size=0,)
-        line3.set_data(np.array([x_from0, y_from0, z_from0]).T, marker_size=0)
+            if (config.orient == "NED"):
+                z = -z
+                z_from0 = -z_from0
+                quat = np.array([quat[0], -quat[1], -quat[2], quat[3]])
+        
+            R = utils.quat2Dcm(quat)    
+            motorPoints = np.array([[dxm, -dym, dzm], [0, 0, 0], [dxm, dym, dzm], [-dxm, dym, dzm], [0, 0, 0], [-dxm, -dym, dzm]])
+            motorPoints = np.dot(R, np.transpose(motorPoints))
+            motorPoints[0,:] = motorPoints[0,:] + x 
+            motorPoints[1,:] = motorPoints[1,:] + y 
+            motorPoints[2,:] = motorPoints[2,:] + z 
+            line1.set_data(np.array([motorPoints[0,0:3], motorPoints[1,0:3], motorPoints[2,0:3]]).T, marker_size=0,)
+            line2.set_data(np.array([motorPoints[0,3:6], motorPoints[1,3:6], motorPoints[2,3:6]]).T, marker_size=0,)
+            line3.set_data(np.array([x_from0, y_from0, z_from0]).T, marker_size=0)
 
-        view.camera.azimuth = view.camera.azimuth-psi_diff
-        view.camera.center = [x,y,z]
-        colors[np.where(notInRange_all[idx_now,:])[0]] = np.array([1, 1, 0, 0.7])
-        colors[np.where(inRange_all[idx_now,:])[0]] = np.array([0, 1, 0, 0.7])
-        colors[np.where(inField_all[idx_now,:])[0]] = np.array([1, 0, 0, 0.7])
-        # scatter.set_data(pointcloud, edge_color=None, face_color=colors, size=6)
-        scatter.set_color(face_color=colors)
-        canvas.app.process_events()
+            view.camera.azimuth = view.camera.azimuth-psi_diff
+            view.camera.center = [x,y,z]
+            colors[np.where(notInRange_all[idx_now,:])[0]] = np.array([1, 1, 0, 0.7])
+            colors[np.where(inRange_all[idx_now,:])[0]] = np.array([0, 1, 0, 0.7])
+            colors[np.where(inField_all[idx_now,:])[0]] = np.array([1, 0, 0, 0.7])
+            scatter.set_color(face_color=colors)
+            canvas.app.process_events()
 
-        idx_prev = idx_now
+            idx_prev = idx_now
 
-        # i += 1
+        return True
 
-    while True:
-        update()
+       
+    while runAni:
+        runAni = update()
 
-    # timer = app.Timer(0.001)
-    # timer.connect(update)
-    # timer.start(iterations=len(x)/numFrames-1)
-
-    import sys
-    if sys.flags.interactive != 1:
-        vispy.app.run()
 
