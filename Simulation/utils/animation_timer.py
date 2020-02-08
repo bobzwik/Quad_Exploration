@@ -139,16 +139,26 @@ def sameAxisAnimation(t_all, waypoints, pos_all, quat_all, euler_all, sDes_tr_al
     dym = params["dym"]
     dzm = params["dzm"]
     
-    # Start time
-    startTime = time.perf_counter()
+    
 
-    def update(idx_prev):
+    idx_prev = 0
+    startTime = 0
+    timer = app.Timer()
+
+    def update(ev):
+        nonlocal idx_prev, startTime
+        if idx_prev == 0:
+            # Start time
+            startTime = time.perf_counter()
+
         # Get time and find the index of the simulation
         currentTime = time.perf_counter()-startTime
         idx_now = np.argmax(t_all > currentTime)
 
-        if (idx_now == 0 and idx_prev > 0):
-            return (False, idx_prev)
+        if (idx_now < idx_prev):
+            # Stop animation
+            timer.stop()
+            app.quit()
         else:
             # Get drone state for current time
             Simtime = t_all[idx_now]
@@ -198,15 +208,13 @@ def sameAxisAnimation(t_all, waypoints, pos_all, quat_all, euler_all, sDes_tr_al
             
             # Update view and visuals
             view.camera.view_changed()
-            canvas.app.process_events()
 
-        return (True, idx_now)
+            idx_prev = idx_now
+    
+    timer.connect(update)
+    timer.start()
 
-
-    runAni = True
-    idx_prev = 0
-
-    while runAni:
-        runAni, idx_prev = update(idx_prev)
-
+    import sys
+    if sys.flags.interactive != 1:
+        vispy.app.run()
 
