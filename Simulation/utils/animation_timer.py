@@ -18,7 +18,6 @@ import sys
 import utils
 import config
 
-numFrames = 10
 rad2deg = 180.0/pi
 deg2rad = pi/180.0
 
@@ -107,17 +106,13 @@ def sameAxisAnimation(t_all, waypoints, pos_all, quat_all, euler_all, sDes_tr_al
 
     psi_ini = euler_all[0,2]*rad2deg
 
-    Plot3D1 = scene.visuals.create_visual_node(vispy.visuals.LinePlotVisual)
-    Plot3D2 = scene.visuals.create_visual_node(vispy.visuals.LinePlotVisual)
-    Plot3D3 = scene.visuals.create_visual_node(vispy.visuals.LinePlotVisual)
-
     # Add Canvas
     canvas = MyScene(pointcloud=potfld.pointcloud, keys='interactive', show=True)
     canvas.measure_fps()
     
     # Add Camera
     view = canvas.central_widget.add_view()
-    view.camera = NonUpdatingTurntable(distance=3, elevation=8, azimuth=(-90-psi_ini), fov=80)
+    view.camera = NonUpdatingTurntable(distance=3.5, elevation=8, azimuth=(-90-psi_ini), fov=90)
     
     # Flip Z coordinates if NED
     if (config.orient == "NED"):
@@ -132,22 +127,21 @@ def sameAxisAnimation(t_all, waypoints, pos_all, quat_all, euler_all, sDes_tr_al
     canvas.redPoints = np.where(inField_all[0,:])[0]
 
     colors = np.ones((potfld.num_points, 4), dtype=np.float32)
-    colors[canvas.yellowPoints] = np.array([1, 1, 0, 0.7])
+    colors[canvas.yellowPoints] = np.array([1, 1, 1, 0.7])
     colors[canvas.redPoints] = np.array([1, 0, 0, 0.7])
 
-    # create scatter object and fill in the data
+    # Create scatter object and fill in the data
     scatter = ColorMarkers()
     scatter.set_data(canvas.pointcloud, edge_color=None, face_color=colors, size=6)
-    # scatter.set_gl_state('translucent', cull_face=False)
     view.add(scatter)
 
-    # add a colored 3D axis for orientation
+    # Add a colored 3D axis for orientation
     axis = visuals.XYZAxis(parent=view.scene)
 
     # Lines to draw quadrotor and past trajectory
-    line1 = Plot3D1([[],[],[]], width=6, color='red', marker_size=0, parent=view.scene)
-    line2 = Plot3D2([[],[],[]], width=6, color='blue', marker_size=0, parent=view.scene)
-    line3 = Plot3D3([[],[],[]], width=2, color='red', marker_size=0, parent=view.scene)
+    line1 = scene.visuals.LinePlot([[],[],[]], width=6, color='red',  marker_size=0, parent=view.scene)
+    line2 = scene.visuals.LinePlot([[],[],[]], width=6, color='blue', marker_size=0, parent=view.scene)
+    line3 = scene.visuals.LinePlot([[],[],[]], width=2, color='red',  marker_size=0, parent=view.scene)
     
     # Drone params
     dxm = params["dxm"]
@@ -174,16 +168,16 @@ def sameAxisAnimation(t_all, waypoints, pos_all, quat_all, euler_all, sDes_tr_al
             x = pos[0]
             y = pos[1]
             z = pos[2]
-            x_from0 = pos_all[0:idx_now+1,0]
-            y_from0 = pos_all[0:idx_now+1,1]
-            z_from0 = pos_all[0:idx_now+1,2]
+            x_from0 = pos_all[0:idx_now+1, 0]
+            y_from0 = pos_all[0:idx_now+1, 1]
+            z_from0 = pos_all[0:idx_now+1, 2]
             quat = quat_all[idx_now]
 
             # Determine by how much yaw (psi) has changed since last frame
             if (idx_now==0):
                 psi_diff = 0
             else:
-                psi_diff = (euler_all[idx_now,2]-euler_all[canvas.idx_prev,2])*rad2deg
+                psi_diff = (euler_all[idx_now,2] - euler_all[canvas.idx_prev,2])*rad2deg
         
             # Normal NED frame changes
             if (config.orient == "NED"):
@@ -200,8 +194,8 @@ def sameAxisAnimation(t_all, waypoints, pos_all, quat_all, euler_all, sDes_tr_al
             motorPoints[2,:] = motorPoints[2,:] + z 
             
             # Draw quadrotor and past trajectory
-            line1.set_data(np.array([motorPoints[0,0:3], motorPoints[1,0:3], motorPoints[2,0:3]]).T, marker_size=0,)
-            line2.set_data(np.array([motorPoints[0,3:6], motorPoints[1,3:6], motorPoints[2,3:6]]).T, marker_size=0,)
+            line1.set_data(np.array([motorPoints[0, 0:3], motorPoints[1, 0:3], motorPoints[2, 0:3]]).T, marker_size=0,)
+            line2.set_data(np.array([motorPoints[0, 3:6], motorPoints[1, 3:6], motorPoints[2, 3:6]]).T, marker_size=0,)
             line3.set_data(np.array([x_from0, y_from0, z_from0]).T, marker_size=0)
 
             # Change pointcloud colors
@@ -209,7 +203,7 @@ def sameAxisAnimation(t_all, waypoints, pos_all, quat_all, euler_all, sDes_tr_al
             allNewRedPoints = np.where(inField_all[idx_now,:])[0]
             newYellowPoints = np.setdiff1d(canvas.redPoints, allNewRedPoints)
             newRedPoints = np.setdiff1d(allNewRedPoints, canvas.redPoints)
-            colors[newYellowPoints] = np.array([1, 1, 0, 0.5])
+            colors[newYellowPoints] = np.array([1, 1, 1, 0.5])
             colors[newRedPoints] = np.array([1, 0, 0, 0.9])
             scatter.set_color(face_color=colors)
 
@@ -218,11 +212,12 @@ def sameAxisAnimation(t_all, waypoints, pos_all, quat_all, euler_all, sDes_tr_al
 
             # Change camera angle and position
             view.camera.azimuth = view.camera.azimuth-psi_diff
-            view.camera.center = [x,y,z]
+            view.camera.center = [x, y, z]
             
             # Update view and visuals
             view.camera.view_changed()
-
+            
+            # Set previous index
             canvas.idx_prev = idx_now
     
     canvas.timer.connect(update)
@@ -230,4 +225,3 @@ def sameAxisAnimation(t_all, waypoints, pos_all, quat_all, euler_all, sDes_tr_al
 
     if sys.flags.interactive != 1:
         vispy.app.run()
-
