@@ -13,6 +13,7 @@ from vispy import app, scene
 from vispy.scene import visuals
 from vispy.color import ColorArray
 import time
+import sys
 
 import utils
 import config
@@ -74,6 +75,21 @@ class NonUpdatingTurntable(vispy.scene.cameras.TurntableCamera):
             raise ValueError('Center must be a 2 or 3 element tuple')
         # self.view_changed()       # Don't update view right now
 
+class MyScene(vispy.scene.SceneCanvas):
+    def __init__(self, pointcloud, **kwargs):
+        super(MyScene, self).__init__(**kwargs)
+        self.unfreeze()
+        self.pointcloud = pointcloud
+        self.startTime  = None
+        self.idx_prev = 0
+        self.yellowPoints = []
+        self.redPoints = []
+
+        if (config.orient == "NED"):
+            self.pointcloud[:,2] = -self.pointcloud[:,2]
+
+        self.timer = app.Timer()
+        self.freeze()
 
 def sameAxisAnimation(t_all, waypoints, pos_all, quat_all, euler_all, sDes_tr_all, Ts, params, xyzType, yawType, potfld, notInRange_all, inRange_all, inField_all, ifsave):
     
@@ -95,10 +111,8 @@ def sameAxisAnimation(t_all, waypoints, pos_all, quat_all, euler_all, sDes_tr_al
     Plot3D2 = scene.visuals.create_visual_node(vispy.visuals.LinePlotVisual)
     Plot3D3 = scene.visuals.create_visual_node(vispy.visuals.LinePlotVisual)
 
-    pointcloud = potfld.pointcloud
-
     # Add Canvas
-    canvas = vispy.scene.SceneCanvas(keys='interactive', show=True)
+    canvas = MyScene(pointcloud=potfld.pointcloud, keys='interactive', show=True)
     canvas.measure_fps()
     
     # Add Camera
@@ -110,19 +124,20 @@ def sameAxisAnimation(t_all, waypoints, pos_all, quat_all, euler_all, sDes_tr_al
         z    = -z
         zDes = -zDes
         z_wp = -z_wp
-        pointcloud[:,2] = -pointcloud[:,2]
         flip = view.camera.flip
         view.camera.flip = flip[0], not flip[1], flip[2] # Flip camera in Y axis
 
     # Create color array
+    canvas.yellowPoints = np.where(np.logical_or(notInRange_all[0,:], inRange_all[0,:]))[0]
+    canvas.redPoints = np.where(inField_all[0,:])[0]
+
     colors = np.ones((potfld.num_points, 4), dtype=np.float32)
-    colors[np.where(notInRange_all[0,:])[0]] = np.array([1, 1, 0, 0.7])
-    colors[np.where(inRange_all[0,:])[0]] = np.array([0, 1, 0, 0.7])
-    colors[np.where(inField_all[0,:])[0]] = np.array([1, 0, 0, 0.7])
+    colors[canvas.yellowPoints] = np.array([1, 1, 0, 0.7])
+    colors[canvas.redPoints] = np.array([1, 0, 0, 0.7])
 
     # create scatter object and fill in the data
     scatter = ColorMarkers()
-    scatter.set_data(pointcloud, edge_color=None, face_color=colors, size=6)
+    scatter.set_data(canvas.pointcloud, edge_color=None, face_color=colors, size=6)
     # scatter.set_gl_state('translucent', cull_face=False)
     view.add(scatter)
 
@@ -138,26 +153,19 @@ def sameAxisAnimation(t_all, waypoints, pos_all, quat_all, euler_all, sDes_tr_al
     dxm = params["dxm"]
     dym = params["dym"]
     dzm = params["dzm"]
-    
-    
-
-    idx_prev = 0
-    startTime = 0
-    timer = app.Timer()
 
     def update(ev):
-        nonlocal idx_prev, startTime
-        if idx_prev == 0:
+        if canvas.idx_prev == 0:
             # Start time
-            startTime = time.perf_counter()
+            canvas.startTime = time.perf_counter()
 
         # Get time and find the index of the simulation
-        currentTime = time.perf_counter()-startTime
+        currentTime = time.perf_counter()-canvas.startTime
         idx_now = np.argmax(t_all > currentTime)
 
-        if (idx_now < idx_prev):
+        if (idx_now < canvas.idx_prev):
             # Stop animation
-            timer.stop()
+            canvas.timer.stop()
             app.quit()
         else:
             # Get drone state for current time
@@ -175,7 +183,7 @@ def sameAxisAnimation(t_all, waypoints, pos_all, quat_all, euler_all, sDes_tr_al
             if (idx_now==0):
                 psi_diff = 0
             else:
-                psi_diff = (euler_all[idx_now,2]-euler_all[idx_prev,2])*rad2deg
+                psi_diff = (euler_all[idx_now,2]-euler_all[canvas.idx_prev,2])*rad2deg
         
             # Normal NED frame changes
             if (config.orient == "NED"):
@@ -197,10 +205,16 @@ def sameAxisAnimation(t_all, waypoints, pos_all, quat_all, euler_all, sDes_tr_al
             line3.set_data(np.array([x_from0, y_from0, z_from0]).T, marker_size=0)
 
             # Change pointcloud colors
-            colors[np.where(notInRange_all[idx_now,:])[0]] = np.array([1, 1, 0, 0.5])
-            colors[np.where(inRange_all[idx_now,:])[0]] = np.array([1, 1, 0, 0.5])
-            colors[np.where(inField_all[idx_now,:])[0]] = np.array([1, 0, 0, 0.9])
+            allNewYellowPoints = np.where(np.logical_or(notInRange_all[idx_now,:], inRange_all[idx_now,:]))[0]
+            allNewRedPoints = np.where(inField_all[idx_now,:])[0]
+            newYellowPoints = np.setdiff1d(canvas.redPoints, allNewRedPoints)
+            newRedPoints = np.setdiff1d(allNewRedPoints, canvas.redPoints)
+            colors[newYellowPoints] = np.array([1, 1, 0, 0.5])
+            colors[newRedPoints] = np.array([1, 0, 0, 0.9])
             scatter.set_color(face_color=colors)
+
+            canvas.yellowPoints = allNewYellowPoints
+            canvas.redPoints = allNewRedPoints
 
             # Change camera angle and position
             view.camera.azimuth = view.camera.azimuth-psi_diff
@@ -209,12 +223,11 @@ def sameAxisAnimation(t_all, waypoints, pos_all, quat_all, euler_all, sDes_tr_al
             # Update view and visuals
             view.camera.view_changed()
 
-            idx_prev = idx_now
+            canvas.idx_prev = idx_now
     
-    timer.connect(update)
-    timer.start()
+    canvas.timer.connect(update)
+    canvas.timer.start()
 
-    import sys
     if sys.flags.interactive != 1:
         vispy.app.run()
 
