@@ -16,6 +16,7 @@ import time
 import sys
 
 import utils
+from utils.boxmarkers import BoxMarkers
 import config
 
 rad2deg = 180.0/pi
@@ -131,8 +132,8 @@ def sameAxisAnimation(t_all, waypoints, pos_all, quat_all, euler_all, sDes_tr_al
     colors[canvas.redPoints] = np.array([1, 0, 0, 0.7])
 
     # Create scatter object and fill in the data
-    scatter = ColorMarkers()
-    scatter.set_data(canvas.pointcloud, edge_color=None, face_color=colors, size=6)
+    color = (0.7,0.7,0.3,1)
+    scatter = BoxMarkers(potfld.pointcloud, 0.2, 0.2, 0.2, color=color, edge_color=(0.2,0.2,0.1,1), parent=view.scene)
     view.add(scatter)
 
     # Add a colored 3D axis for orientation
@@ -205,7 +206,7 @@ def sameAxisAnimation(t_all, waypoints, pos_all, quat_all, euler_all, sDes_tr_al
             newRedPoints = np.setdiff1d(allNewRedPoints, canvas.redPoints)
             colors[newYellowPoints] = np.array([1, 1, 1, 0.5])
             colors[newRedPoints] = np.array([1, 0, 0, 0.9])
-            scatter.set_color(face_color=colors)
+            # scatter.set_color(face_color=colors)
 
             canvas.yellowPoints = allNewYellowPoints
             canvas.redPoints = allNewRedPoints
