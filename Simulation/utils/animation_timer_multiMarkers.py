@@ -127,16 +127,11 @@ def sameAxisAnimation(t_all, waypoints, pos_all, quat_all, euler_all, sDes_tr_al
     canvas.yellowPoints = np.where(np.logical_or(notInRange_all[0,:], inRange_all[0,:]))[0]
     canvas.redPoints = np.where(inField_all[0,:])[0]
 
-    # colors = np.ones((potfld.num_points, 4), dtype=np.float32)
-    # colors[canvas.yellowPoints] = np.array([1, 1, 1, 0.7])
-    # colors[canvas.redPoints] = np.array([1, 0, 0, 0.7])
-
     # Create scatter object and fill in the data
-    color = (1,1,0.5,1)
-    scatter = BoxMarkers(potfld.pointcloud, 0.1, 0.1, 0.1, color=color, edge_color=(0,0,0,0.3), parent=view.scene)
-    scatter.set_face_color(indices=canvas.yellowPoints, color=color)
-    scatter.set_face_color(indices=canvas.redPoints, color= (1, 0, 0, 0.7))
-    scatter.mesh.mesh_data_changed()
+    color_points = (1, 1, 0.5, 1)
+    color_field  = (1, 0, 0, 0.5)
+    scatter = BoxMarkers(potfld.pointcloud, 0.1, 0.1, 0.1, color=color_points, edge_color=(0,0,0,0.3), parent=view.scene)
+    scatter_field = BoxMarkers(potfld.pointcloud[canvas.redPoints], 0.3, 0.3, 0.3, color=color_field, edge_color=(0,0,0,0.3), parent=view.scene)
 
     # Add a colored 3D axis for orientation
     axis = visuals.XYZAxis(parent=view.scene)
@@ -201,16 +196,13 @@ def sameAxisAnimation(t_all, waypoints, pos_all, quat_all, euler_all, sDes_tr_al
             line2.set_data(np.array([motorPoints[0, 3:6], motorPoints[1, 3:6], motorPoints[2, 3:6]]).T, marker_size=0,)
             line3.set_data(np.array([x_from0, y_from0, z_from0]).T, marker_size=0)
 
-            # Change pointcloud colors
+            # Move field markers
             allNewYellowPoints = np.where(np.logical_or(notInRange_all[idx_now,:], inRange_all[idx_now,:]))[0]
             allNewRedPoints = np.where(inField_all[idx_now,:])[0]
-            newYellowPoints = np.setdiff1d(canvas.redPoints, allNewRedPoints)
-            newRedPoints = np.setdiff1d(allNewRedPoints, canvas.redPoints)
-            # colors[newYellowPoints] = np.array([1, 1, 1, 0.5])
-            # colors[newRedPoints] = np.array([1, 0, 0, 0.9])
-            scatter.set_face_color(indices=newYellowPoints, color=[1, 1, 0.5, 1])
-            scatter.set_face_color(indices=newRedPoints, color=[1, 0, 0, 1])
-            scatter.mesh.mesh_data_changed()
+            # newYellowPoints = np.setdiff1d(canvas.redPoints, allNewRedPoints)
+            # newRedPoints = np.setdiff1d(allNewRedPoints, canvas.redPoints)
+            
+            scatter_field.set_data(canvas.pointcloud[allNewRedPoints])
 
             canvas.yellowPoints = allNewYellowPoints
             canvas.redPoints = allNewRedPoints
