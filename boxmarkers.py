@@ -13,8 +13,6 @@ class BoxMarkersVisual(CompoundVisual):
 
     Parameters
     ----------
-    point_coords : array_like
-        Marker coordinates
     width : float
         Box width.
     height : float
@@ -41,55 +39,34 @@ class BoxMarkersVisual(CompoundVisual):
         cube edges are drawn.
     """
 
-    def __init__(self, point_coords=np.array([0,0,0]), width=1, height=1, depth=1, width_segments=1,
+    def __init__(self, points=np.array([0,0,0]), width=1, height=1, depth=1, width_segments=1,
                  height_segments=1, depth_segments=1, planes=None,
                  vertex_colors=None, face_colors=None,
                  color=(0.5, 0.5, 1, 1), edge_color=None, **kwargs):
-        
-        self.point_coords = point_coords
-        
-        # Create a unit box
-        width_box  = 1
-        height_box = 1
-        depth_box  = 1
-
-        scale = np.array([width/width_box, height/height_box, depth/depth_box])
-
-        vertices_box, filled_indices_box, outline_indices_box = create_box(
-                width_box, height_box, depth_box, width_segments, height_segments,
-                depth_segments, planes)
-
-        # Store number of vertices, filled_indices and outline_indices per box
-        self.nb_v  = vertices_box.shape[0]
-        self.nb_fi = filled_indices_box.shape[0]
-        self.nb_oi = outline_indices_box.shape[0]
-
-        # Create empty arrays for vertices, filled_indices and outline_indices
-        vertices = np.zeros(24*point_coords.shape[0],
+        vertices = np.zeros(24*points.shape[0],
                         [('position', np.float32, 3),
                          ('texcoord', np.float32, 2),
                          ('normal', np.float32, 3),
                          ('color', np.float32, 4)])
-        filled_indices = np.zeros([12*point_coords.shape[0], 3], np.uint32)
-        outline_indices = np.zeros([24*point_coords.shape[0], 2], np.uint32)
+        filled_indices = np.zeros([12*points.shape[0], 3], np.uint32)
+        outline_indices = np.zeros([24*points.shape[0], 2], np.uint32)
 
-        # Iterate for every marker
-        for i in range(point_coords.shape[0]):
-            idx_v_start  = self.nb_v*i
-            idx_v_end    = self.nb_v*(i+1)
-            idx_fi_start = self.nb_fi*i
-            idx_fi_end   = self.nb_fi*(i+1)
-            idx_oi_start = self.nb_oi*i
-            idx_oi_end   = self.nb_oi*(i+1)
+        vertices_box, filled_indices_box, outline_indices_box = create_box(
+                width, height, depth, width_segments, height_segments,
+                depth_segments, planes)
 
-            # Scale and translate unit box
-            vertices[idx_v_start:idx_v_end]['position'] = vertices_box['position']*scale + point_coords[i]
-            filled_indices[idx_fi_start:idx_fi_end] = filled_indices_box + idx_v_start
-            outline_indices[idx_oi_start:idx_oi_end] = outline_indices_box + idx_v_start
+        for i in range( points.shape[0]):
+            start_24_idx = 24*i
+            end_24_idx = 24*(i+1)
+            start_12_idx = 12*i
+            end_12_idx = 12*(i+1)
 
-        # Create MeshVisual for faces and borders
+            vertices[start_24_idx:end_24_idx]['position'] = vertices_box['position'] + points[i]
+            filled_indices[start_12_idx:end_12_idx] = filled_indices_box + start_24_idx
+            outline_indices[start_24_idx:end_24_idx] = outline_indices_box + start_24_idx
+
         self._mesh = MeshVisual(vertices['position'], filled_indices,
-                                vertex_colors, face_colors, color, shading=None)
+                                vertex_colors, face_colors, color)
         if edge_color:
             self._border = MeshVisual(vertices['position'], outline_indices,
                                       color=edge_color, mode='lines')
