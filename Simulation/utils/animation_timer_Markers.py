@@ -124,19 +124,21 @@ def sameAxisAnimation(t_all, waypoints, pos_all, quat_all, euler_all, sDes_tr_al
         view.camera.flip = flip[0], not flip[1], flip[2] # Flip camera in Y axis
 
     # Create color array
+    color_points = (1, 1, 0.5, 1)
+    color_field  = (1, 0, 0, 1)
+    color_edges  = (0, 0, 0, 0.3)
+    colors = np.ones((potfld.num_points, 4), dtype=np.float32)
     canvas.yellowPoints = np.where(np.logical_or(notInRange_all[0,:], inRange_all[0,:]))[0]
     canvas.redPoints = np.where(inField_all[0,:])[0]
 
-    # colors = np.ones((potfld.num_points, 4), dtype=np.float32)
-    # colors[canvas.yellowPoints] = np.array([1, 1, 1, 0.7])
-    # colors[canvas.redPoints] = np.array([1, 0, 0, 0.7])
+    colors[canvas.yellowPoints] = color_points
+    colors[canvas.redPoints] = color_field
 
-    # Create scatter object and fill in the data
-    color = (1,1,0.5,1)
-    scatter = BoxMarkers(potfld.pointcloud, 0.1, 0.1, 0.1, color=color, edge_color=(0,0,0,0.3), parent=view.scene)
-    scatter.set_face_color(indices=canvas.yellowPoints, color=color)
-    scatter.set_face_color(indices=canvas.redPoints, color= (1, 0, 0, 0.7))
-    scatter.mesh.mesh_data_changed()
+    # create scatter object and fill in the data
+    scatter = ColorMarkers()
+    scatter.set_data(canvas.pointcloud, edge_color=color_edges, face_color=colors, size=6)
+    # scatter.set_gl_state('translucent', cull_face=False)
+    view.add(scatter)
 
     # Add a colored 3D axis for orientation
     axis = visuals.XYZAxis(parent=view.scene)
@@ -202,24 +204,18 @@ def sameAxisAnimation(t_all, waypoints, pos_all, quat_all, euler_all, sDes_tr_al
             line3.set_data(np.array([x_from0, y_from0, z_from0]).T, marker_size=0)
 
             # Change pointcloud colors
-            allNewYellowPoints = np.where(np.logical_or(notInRange_all[idx_now,:], inRange_all[idx_now,:]))[0]
-            allNewRedPoints = np.where(inField_all[idx_now,:])[0]
-            newYellowPoints = np.setdiff1d(canvas.redPoints, allNewRedPoints)
-            newRedPoints = np.setdiff1d(allNewRedPoints, canvas.redPoints)
-            # colors[newYellowPoints] = np.array([1, 1, 1, 0.5])
-            # colors[newRedPoints] = np.array([1, 0, 0, 0.9])
-            scatter.set_face_color(indices=newYellowPoints, color=[1, 1, 0.5, 1])
-            scatter.set_face_color(indices=newRedPoints, color=[1, 0, 0, 1])
-            scatter.mesh.mesh_data_changed()
+            canvas.yellowPoints = np.where(np.logical_or(notInRange_all[idx_now,:], inRange_all[idx_now,:]))[0]
+            canvas.redPoints = np.where(inField_all[idx_now,:])[0]
+            colors[canvas.yellowPoints] = color_points
+            colors[canvas.redPoints] = color_field
 
-            canvas.yellowPoints = allNewYellowPoints
-            canvas.redPoints = allNewRedPoints
+            scatter.set_color(face_color=colors)
 
             # Change camera angle and position
             view.camera.azimuth = view.camera.azimuth-psi_diff
             view.camera.center = [x, y, z]
             
-            # Update view and visuals
+            # Update view
             view.camera.view_changed()
             
             # Set previous index
