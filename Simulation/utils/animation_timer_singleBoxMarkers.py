@@ -22,19 +22,6 @@ import config
 rad2deg = 180.0/pi
 deg2rad = pi/180.0
 
-class ColorMarkers(visuals.Markers):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-    
-    def set_color(self, face_color='white'):
-        face_color = ColorArray(face_color).rgba
-        if len(face_color) == 1:
-            face_color = face_color[0]
-
-        self._data['a_bg_color'] = face_color
-        self._vbo.set_data(self._data)
-        self.update()
-
 class NonUpdatingTurntable(vispy.scene.cameras.TurntableCamera):
     def __init__(self, **kwargs):
         super(NonUpdatingTurntable, self).__init__(**kwargs)
@@ -129,9 +116,12 @@ def sameAxisAnimation(t_all, waypoints, pos_all, quat_all, euler_all, sDes_tr_al
 
     # Create scatter object and fill in the data
     color_points = (1, 1, 0.5, 1)
-    color_field  = (1, 0, 0, 0.5)
-    scatter = BoxMarkers(potfld.pointcloud, 0.1, 0.1, 0.1, color=color_points, edge_color=(0,0,0,0.3), parent=view.scene)
-    scatter_field = BoxMarkers(potfld.pointcloud[canvas.redPoints], 0.3, 0.3, 0.3, color=color_field, edge_color=(0,0,0,0.3), parent=view.scene)
+    color_field  = (1, 0, 0, 1)
+    color_edges  = (0, 0, 0, 0.3)
+    scatter = BoxMarkers(potfld.pointcloud, 0.1, 0.1, 0.1, color=color_points, edge_color=color_edges, parent=view.scene)
+    scatter.set_face_color(indices=canvas.yellowPoints, color=color_points)
+    scatter.set_face_color(indices=canvas.redPoints, color=color_field)
+    scatter.mesh.mesh_data_changed()
 
     # Add a colored 3D axis for orientation
     axis = visuals.XYZAxis(parent=view.scene)
@@ -196,13 +186,15 @@ def sameAxisAnimation(t_all, waypoints, pos_all, quat_all, euler_all, sDes_tr_al
             line2.set_data(np.array([motorPoints[0, 3:6], motorPoints[1, 3:6], motorPoints[2, 3:6]]).T, marker_size=0,)
             line3.set_data(np.array([x_from0, y_from0, z_from0]).T, marker_size=0)
 
-            # Move field markers
+            # Change pointcloud colors
             allNewYellowPoints = np.where(np.logical_or(notInRange_all[idx_now,:], inRange_all[idx_now,:]))[0]
             allNewRedPoints = np.where(inField_all[idx_now,:])[0]
-            # newYellowPoints = np.setdiff1d(canvas.redPoints, allNewRedPoints)
-            # newRedPoints = np.setdiff1d(allNewRedPoints, canvas.redPoints)
+            newYellowPoints = np.setdiff1d(canvas.redPoints, allNewRedPoints)
+            newRedPoints = np.setdiff1d(allNewRedPoints, canvas.redPoints)
             
-            scatter_field.set_data(canvas.pointcloud[allNewRedPoints])
+            scatter.set_face_color(indices=newYellowPoints, color=color_points)
+            scatter.set_face_color(indices=newRedPoints, color=color_field)
+            scatter.mesh.mesh_data_changed()
 
             canvas.yellowPoints = allNewYellowPoints
             canvas.redPoints = allNewRedPoints
@@ -211,7 +203,7 @@ def sameAxisAnimation(t_all, waypoints, pos_all, quat_all, euler_all, sDes_tr_al
             view.camera.azimuth = view.camera.azimuth-psi_diff
             view.camera.center = [x, y, z]
             
-            # Update view and visuals
+            # Update view
             view.camera.view_changed()
             
             # Set previous index
