@@ -17,7 +17,7 @@ def find_nearest(array, value):
 #### Multiple Arcs ####
 
 # Grid params
-grid_step = 0.3
+grid_step = 0.25
 tun_width = 4
 tun_height = 4
 yoffset = 0.05

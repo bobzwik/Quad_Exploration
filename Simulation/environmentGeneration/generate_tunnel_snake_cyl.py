@@ -18,7 +18,7 @@ def find_nearest(array, value):
 
 
 # Grid params
-grid_step = 0.3
+grid_step = 0.25
 
 # Initialize pointcloud
 pointcloud = np.zeros([1,3])
