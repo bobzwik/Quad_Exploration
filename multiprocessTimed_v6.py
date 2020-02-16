@@ -37,7 +37,7 @@ def func0(id, freq, endFlag, p0Flag, runIdx, Ts):
             # Add fake computational time depending on the frequency of the process
             # print(f'id: {id} at {freq} Hz at {t}s') 
             if freq == 400:
-                time.sleep(0.0015)
+                time.sleep(0.001)
             elif freq == 200:
                 time.sleep(0.003)
             elif freq == 100:
@@ -63,7 +63,7 @@ def func1(id, freq, endFlag, p1Flag, runIdx, Ts, parent_conn):
             # Add fake computational time depending on the frequency of the process
             # print(f'id: {id} at {freq} Hz at {t}s') 
             if freq == 400:
-                time.sleep(0.0015)
+                time.sleep(0.001)
             elif freq == 200:
                 time.sleep(0.003)
             elif freq == 100:
@@ -93,7 +93,7 @@ def func2(id, freq, endFlag, p2Flag, runIdx, Ts, child_conn):
             # Add fake computational time depending on the frequency of the process
             # print(f'id: {id} at {freq} Hz at {t}s') 
             if freq == 400:
-                time.sleep(0.0015)
+                time.sleep(0.001)
             elif freq == 200:
                 time.sleep(0.003)
             elif freq == 100:
