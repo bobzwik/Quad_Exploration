@@ -12,7 +12,7 @@ from numpy import sin, cos, tan, sqrt
 from numpy.linalg import norm
 
 rangeRadius = 3
-fieldRadius = 2.5
+fieldRadius = 2.4
 
 
 class PotField:
@@ -83,7 +83,7 @@ class PotField:
         self.fieldDistance = distance[np.where(withinField)[0]]
 
     def rep_force(self, quad):
-        k = 0.4
+        k = 0.32
         F_rep_x = k*(1/self.fieldDistance - 1/fieldRadius)*(1/(self.fieldDistance**2))*(quad.pos[0] - self.fieldPointcloud[:,0])/self.fieldDistance
         F_rep_y = k*(1/self.fieldDistance - 1/fieldRadius)*(1/(self.fieldDistance**2))*(quad.pos[1] - self.fieldPointcloud[:,1])/self.fieldDistance
         F_rep_z = k*(1/self.fieldDistance - 1/fieldRadius)*(1/(self.fieldDistance**2))*(quad.pos[2] - self.fieldPointcloud[:,2])/self.fieldDistance
