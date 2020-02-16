@@ -1,4 +1,4 @@
-# Artificial Potential Field Branch (of Quad_SimCon Project)
+# Quadcopter Artificial Potential Field Branch (of Quad_SimCon Project)
 
 This branch is for developing Artificial Potential Field navigation within pointclouds. Essentially, every point of the pointcloud is an obstacle that exerts a force on the drone in order to stop it from colliding with the obstacle. In this project, the Potential Field is used to navigate within a voxelized pointcloud tunnel.
 
@@ -55,4 +55,4 @@ If you have the pip package manager installed you can simply type:
 * Implement "Extended Potential Field" to reduce oscillations
 * Improve Vispy performance
 * Implement "Frontier Based Exploration" (so learn about ray-casting and possibly octomaps)
-* Use the `multiprocessing` Python package to parallelize different tasks (a process for the quadrotor dynamics, one for the control, one for the "Frontier Based Exploration" and one for the visualization) ([dev branch](https://github.com/bobzwik/Quadcopter_SimCon/tree/potentialField_multiprocess))
+* Use the `multiprocessing` Python package to parallelize different tasks (a process for the quadcopter dynamics, one for the control, one for the "Frontier Based Exploration" and one for the visualization) ([dev branch](https://github.com/bobzwik/Quadcopter_SimCon/tree/potentialField_multiprocess))
