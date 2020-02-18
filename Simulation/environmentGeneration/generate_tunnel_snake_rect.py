@@ -477,5 +477,8 @@ pointcloud_filt = np.transpose(np.array([(x_obs_filt), (y_obs_filt), (z_obs_filt
 # Remove duplicates
 pointcloud_filt = np.unique(pointcloud_filt, axis=0)
 
+# Put grid step size as first value of the pointcloud
+pointcloud_filt = np.insert(pointcloud_filt, 0, [grid_step, grid_step, grid_step], axis=0)
+
 # Save pointcloud
 np.savetxt("./Simulation/environmentGeneration/pointcloud_grid.csv", pointcloud_filt, fmt='%0.4f', delimiter=",")
