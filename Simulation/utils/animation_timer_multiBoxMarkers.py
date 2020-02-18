@@ -119,7 +119,7 @@ def sameAxisAnimation(t_all, waypoints, pos_all, quat_all, euler_all, sDes_tr_al
     color_field  = (1, 0, 0, 0.5)
     color_edges  = (0, 0, 0, 0.3)
     scatter = BoxMarkers(potfld.pointcloud, 0.1, 0.1, 0.1, color=color_points, edge_color=color_edges, parent=view.scene)
-    scatter_field = BoxMarkers(potfld.pointcloud[canvas.redPoints], 0.3, 0.3, 0.3, color=color_field, edge_color=color_edges, parent=view.scene)
+    scatter_field = BoxMarkers(potfld.pointcloud[canvas.redPoints], potfld.gridStep[0], potfld.gridStep[1], potfld.gridStep[2], color=color_field, edge_color=color_edges, parent=view.scene)
 
     # Add a colored 3D axis for orientation
     axis = visuals.XYZAxis(parent=view.scene)

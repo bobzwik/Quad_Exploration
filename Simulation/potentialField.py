@@ -11,16 +11,19 @@ from numpy import pi
 from numpy import sin, cos, tan, sqrt
 from numpy.linalg import norm
 
-rangeRadius = 3
-fieldRadius = 2.4
+
 
 
 class PotField:
 
     def __init__(self, pfType):
-        self.pointcloud = np.genfromtxt("./Simulation/environmentGeneration/pointcloud_grid.csv", delimiter=",")
-
+        importedData = np.genfromtxt("./Simulation/environmentGeneration/pointcloud_grid.csv", delimiter=",")
+        self.pointcloud = importedData[1::]
+        self.gridStep = importedData[0]
         self.num_points = len(self.pointcloud)
+
+        self.rangeRadius = 3
+        self.fieldRadius = 2.4
 
         self.max_pc_x = self.pointcloud[:,0].max()
         self.max_pc_y = self.pointcloud[:,1].max()
@@ -53,9 +56,9 @@ class PotField:
 
     
     def isWithinRange(self, quad):
-        self.withinRange = (abs(quad.pos[0]-self.pointcloud[:,0]) <= rangeRadius) & \
-                           (abs(quad.pos[1]-self.pointcloud[:,1]) <= rangeRadius) & \
-                           (abs(quad.pos[2]-self.pointcloud[:,2]) <= rangeRadius)
+        self.withinRange = (abs(quad.pos[0]-self.pointcloud[:,0]) <= self.rangeRadius) & \
+                           (abs(quad.pos[1]-self.pointcloud[:,1]) <= self.rangeRadius) & \
+                           (abs(quad.pos[2]-self.pointcloud[:,2]) <= self.rangeRadius)
         self.idx_withinRange = np.where(self.withinRange)[0]
         self.notWithinRange = ~(self.withinRange)
         self.idx_notWithinRange = np.where(self.notWithinRange)[0]
@@ -64,7 +67,7 @@ class PotField:
         distance = ((self.pointcloud[self.idx_withinRange,0]-quad.pos[0])**2 +          \
                     (self.pointcloud[self.idx_withinRange,1]-quad.pos[1])**2 +          \
                     (self.pointcloud[self.idx_withinRange,2]-quad.pos[2])**2)**(0.5)
-        withinField = distance <= fieldRadius
+        withinField = distance <= self.fieldRadius
         
         try:
             self.distanceMin = distance.min()
@@ -84,8 +87,8 @@ class PotField:
 
     def rep_force(self, quad):
         k = 0.32
-        F_rep_x = k*(1/self.fieldDistance - 1/fieldRadius)*(1/(self.fieldDistance**2))*(quad.pos[0] - self.fieldPointcloud[:,0])/self.fieldDistance
-        F_rep_y = k*(1/self.fieldDistance - 1/fieldRadius)*(1/(self.fieldDistance**2))*(quad.pos[1] - self.fieldPointcloud[:,1])/self.fieldDistance
-        F_rep_z = k*(1/self.fieldDistance - 1/fieldRadius)*(1/(self.fieldDistance**2))*(quad.pos[2] - self.fieldPointcloud[:,2])/self.fieldDistance
+        F_rep_x = k*(1/self.fieldDistance - 1/self.fieldRadius)*(1/(self.fieldDistance**2))*(quad.pos[0] - self.fieldPointcloud[:,0])/self.fieldDistance
+        F_rep_y = k*(1/self.fieldDistance - 1/self.fieldRadius)*(1/(self.fieldDistance**2))*(quad.pos[1] - self.fieldPointcloud[:,1])/self.fieldDistance
+        F_rep_z = k*(1/self.fieldDistance - 1/self.fieldRadius)*(1/(self.fieldDistance**2))*(quad.pos[2] - self.fieldPointcloud[:,2])/self.fieldDistance
 
         self.F_rep = np.array([np.sum(F_rep_x), np.sum(F_rep_y), np.sum(F_rep_z)])        
