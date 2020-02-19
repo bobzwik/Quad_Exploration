@@ -7,6 +7,7 @@ from vispy.geometry import create_box
 from vispy.visuals.mesh import MeshVisual
 from vispy.visuals.visual import CompoundVisual
 from vispy.scene.visuals import create_visual_node
+from utils.updatableMesh import UpdatableMeshVisual
 
 class BoxMarkersVisual(CompoundVisual):
     """Visual that displays a box.
@@ -74,6 +75,7 @@ class BoxMarkersVisual(CompoundVisual):
                          ('texcoord', np.float32, 2),
                          ('normal', np.float32, 3),
                          ('color', np.float32, 4)])
+        verts_to_box = np.zeros([self.nb_v*point_coords.shape[0], 1], np.uint32)
         filled_indices = np.zeros([self.nb_fi*point_coords.shape[0], 3], np.uint32)
         outline_indices = np.zeros([self.nb_oi*point_coords.shape[0], 2], np.uint32)
 
@@ -88,19 +90,20 @@ class BoxMarkersVisual(CompoundVisual):
 
             # Scale and translate unit box
             vertices[idx_v_start:idx_v_end]['position'] = self.vertices_box['position']*scale + point_coords[i]
+            verts_to_box[idx_v_start:idx_v_end] = i
             filled_indices[idx_fi_start:idx_fi_end] = self.filled_indices_box + idx_v_start
             outline_indices[idx_oi_start:idx_oi_end] = self.outline_indices_box + idx_v_start
         
         self.nb_faces = filled_indices.shape[0]
 
         # Create MeshVisual for faces and borders
-        self._mesh = MeshVisual(vertices['position'], filled_indices,
-                                vertex_colors, face_colors, color, shading=None)
+        self._mesh = UpdatableMeshVisual(vertices['position'], filled_indices,
+                                vertex_colors, face_colors, color, shading=None, vert_to_box=verts_to_box)
         if edge_color:
-            self._border = MeshVisual(vertices['position'], outline_indices,
-                                      color=edge_color, mode='lines')
+            self._border = UpdatableMeshVisual(vertices['position'], outline_indices,
+                                      color=edge_color, mode='lines', vert_to_box=verts_to_box)
         else:
-            self._border = MeshVisual()
+            self._border = UpdatableMeshVisual()
 
         CompoundVisual.__init__(self, [self._mesh, self._border], **kwargs)
         self.mesh.set_gl_state(polygon_offset_fill=True,
