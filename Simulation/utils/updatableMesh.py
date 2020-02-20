@@ -243,18 +243,27 @@ class UpdatableMeshVisual(MeshVisual):
     
 
     def set_visible_faces(self, idx_vis):
-        self._visible_verts[idx_vis,:,:] = 1
+        self.visible_verts[idx_vis,:,:] = 1
 
 
     def set_invisible_faces(self, idx_vis):
-        self._visible_verts[idx_vis,:,:] = 0
+        self.visible_verts[idx_vis,:,:] = 0
  
     
     def update_vis_buffer(self):
-        self.vis_buffer.set_data(self._visible_verts)
+        self.vis_buffer.set_data(self.visible_verts)
         self.shared_program.vert['vis_vert'] = self.vis_buffer
         
+    
+    @property
+    def visible_verts(self):
+        return self._visible_verts
 
+
+    @visible_verts.setter
+    def visible_verts(self, visible_verts):
+        self._visible_verts = visible_verts
+        
     
     # def set_visible_faces(self, idx_vis):
     #     # nfaces = self.mesh_data.n_faces

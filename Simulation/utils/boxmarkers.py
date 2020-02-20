@@ -122,7 +122,6 @@ class BoxMarkersVisual(CompoundVisual):
     def set_visible_boxes(self, idx_box_vis):
         newbox_vis = np.setdiff1d(idx_box_vis, self.visible_boxes)
         oldbox_vis = np.setdiff1d(self.visible_boxes, idx_box_vis)
-        # oldbox_vis = self.visible_boxes[np.in1d(self.visible_boxes,idx_box_vis,invert=True)]
         
         idx_face_vis = np.ravel(self.box_to_face[newbox_vis])
         idx_outl_vis = np.ravel(self.box_to_outl[newbox_vis])
@@ -143,6 +142,7 @@ class BoxMarkersVisual(CompoundVisual):
     @property
     def visible_boxes(self):
         return self._visible_boxes
+
 
     @visible_boxes.setter
     def visible_boxes(self, visible_boxes):
