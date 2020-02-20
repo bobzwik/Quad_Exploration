@@ -120,8 +120,9 @@ def sameAxisAnimation(t_all, waypoints, pos_all, quat_all, euler_all, sDes_tr_al
     color_edges  = (0, 0, 0, 0.3)
     scatter = BoxMarkers(potfld.pointcloud, 0.1, 0.1, 0.1, 
                     color=color_points, edge_color=color_edges, parent=view.scene)
-    # scatter_field = BoxMarkers(potfld.pointcloud[canvas.redPoints], potfld.gridStep[0], potfld.gridStep[1], potfld.gridStep[2], 
-                    # color=color_field, edge_color=color_edges, parent=view.scene)
+    scatter_field = BoxMarkers(potfld.pointcloud, potfld.gridStep[0], potfld.gridStep[1], potfld.gridStep[2], 
+                    color=color_field, edge_color=color_edges, parent=view.scene)
+    scatter_field.set_visible_boxes(canvas.redPoints)
 
     # Add a colored 3D axis for orientation
     axis = visuals.XYZAxis(parent=view.scene)
@@ -187,8 +188,10 @@ def sameAxisAnimation(t_all, waypoints, pos_all, quat_all, euler_all, sDes_tr_al
             line3.set_data(np.array([x_from0, y_from0, z_from0]).T, marker_size=0)
 
             # Move field markers
-            canvas.redPoints = np.where(inField_all[idx_now,:])[0]
-            # scatter_field.set_data(canvas.pointcloud[canvas.redPoints])
+            redPoints = np.where(inField_all[idx_now,:])[0]
+            if np.setdiff1d(redPoints, canvas.redPoints).size != 0:
+                canvas.redPoints = redPoints
+                scatter_field.set_visible_boxes(redPoints)
 
             # Change camera angle and position
             view.camera.azimuth = view.camera.azimuth-psi_diff

@@ -103,7 +103,7 @@ varying float draw_yes_no;
 void main() {
     v_base_color = $color_transform($base_color);
     gl_Position = $transform($to_vec4($position));
-    draw_yes_no = $vis_vert.x;
+    draw_yes_no = $vis_vert;
 }
 """
 
@@ -182,7 +182,7 @@ class UpdatableMeshVisual(MeshVisual):
     """
     def __init__(self, nb_boxes, vertices=None, faces=None, vertex_colors=None,
                  face_colors=None, color=(0.5, 0.5, 1, 1), vertex_values=None,
-                 meshdata=None, shading=None, mode='triangles', vert_to_box=None, visible_boxes=None, **kwargs):
+                 meshdata=None, shading=None, mode='triangles', **kwargs):
 
         # Function for computing phong shading
         # self._phong = Function(phong_template)
@@ -213,12 +213,7 @@ class UpdatableMeshVisual(MeshVisual):
         self._shininess = 1. / 200.
         self._cmap = get_colormap('cubehelix')
         self._clim = 'auto'
-
-        # For BoxMarkersVisual
-        if vert_to_box is None:
-            raise ValueError('verts_to_box must be defined')
-        elif vert_to_box.shape[0] != vertices.shape[0]:
-            raise ValueError('verts_to_box must have a value for every vertex')
+        self._mode = mode
 
         # Uniform color
         self._color = Color(color)
@@ -232,31 +227,56 @@ class UpdatableMeshVisual(MeshVisual):
             face_colors=face_colors, vertex_values=vertex_values,
             meshdata=meshdata, color=color)
 
-        # self._vert_to_box = IndexBuffer()
-        # self._vert_to_box.set_data(vert_to_box, convert=True)
-        # self.shared_program.vert['vert_to_box'] = Variable('attribute float vert_to_box')
-        # self.shared_program.vert['vert_to_box'] = self._vert_to_box
+        # Initialize all faces as visible
         if mode is 'lines':
-            self._visible_verts = np.ones((faces.shape[0],2,3), dtype=np.float32)
+            self._visible_verts = np.ones((faces.shape[0],2,1), dtype=np.float32)
         else:
-            self._visible_verts = np.ones((faces.shape[0],3,3), dtype=np.float32)
-        print(self._visible_verts.shape)
+            self._visible_verts = np.ones((faces.shape[0],3,1), dtype=np.float32)
         
-        # self.shared_program.vert['visible_verts'] = Variable('attribute float vis_vert')
-        # Variable('varying float vis_vert')
-        # print(vis_vert)
-        visible = VertexBuffer()
-        visible.set_data(self._visible_verts, convert=True)
-        print(visible.size)
-        print(visible.nbytes)
-        # print(visible)
-        # Variable('attribute float vis_vert')
-        # self.shared_program.vert['vis_vert'] = visible
-        self.shared_program.vert['vis_vert'] = visible
-        # print(self.shared_program.vert['vis_vert']._value)
+        self.vis_buffer = VertexBuffer()
+        self.vis_buffer.set_data(self._visible_verts, convert=True)
+        self.shared_program.vert['vis_vert'] = self.vis_buffer
 
         # primitive mode
         self._draw_mode = mode
         self.freeze()
     
+
+    def set_visible_faces(self, idx_vis):
+        self._visible_verts[idx_vis,:,:] = 1
+
+
+    def set_invisible_faces(self, idx_vis):
+        self._visible_verts[idx_vis,:,:] = 0
+    
+    
+    def update_vis_buffer(self):
+        self.vis_buffer.set_data(self._visible_verts)
+        self.shared_program.vert['vis_vert'] = self.vis_buffer
+        
+
+    
+    # def set_visible_faces(self, idx_vis):
+    #     # nfaces = self.mesh_data.n_faces
+    #     # if self.mode is 'lines':
+    #         # self._visible_verts = np.zeros((nfaces,2,1), dtype=np.float32)
+    #         # self._visible_verts[idx_vis,:,:] = 1
+    #     # else:
+    #         # self._visible_verts = np.zeros((nfaces,3,1), dtype=np.float32)
+    #         # self._visible_verts[idx_vis,:,:] = 1
+    #     self._visible_verts[idx_vis,:,:] = 1
+    #     self.vis_buffer.set_data(self._visible_verts)
+    #     self.shared_program.vert['vis_vert'] = self.vis_buffer
+
+    # def set_invisible_faces(self, idx_vis):
+    #     # nfaces = self.mesh_data.n_faces
+    #     # if self.mode is 'lines':
+    #         # self._visible_verts = np.zeros((nfaces,2,1), dtype=np.float32)
+    #         # self._visible_verts[idx_vis,:,:] = 0
+    #     # else:
+    #         # self._visible_verts = np.zeros((nfaces,3,1), dtype=np.float32)
+    #         # self._visible_verts[idx_vis,:,:] = 0
+    #     self._visible_verts[idx_vis,:,:] = 0
+    #     self.vis_buffer.set_data(self._visible_verts)
+    #     self.shared_program.vert['vis_vert'] = self.vis_buffer
 
