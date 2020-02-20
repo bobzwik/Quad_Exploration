@@ -8,7 +8,6 @@ from vispy.visuals.mesh import MeshVisual
 from vispy.visuals.visual import CompoundVisual
 from vispy.scene.visuals import create_visual_node
 from utils.updatableMesh import UpdatableMeshVisual
-import utils
 
 class BoxMarkersVisual(CompoundVisual):
     """Visual that displays a box.
