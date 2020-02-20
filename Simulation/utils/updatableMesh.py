@@ -96,8 +96,8 @@ void main() {
 }
 """  # noqa
 
-# Shader code for non lighted rendering
-vertex_template = """
+# Shader code for non lighted rendering with variable visibility
+vertex_template_vis = """
 varying vec4 v_base_color;
 varying float draw_yes_no;
 void main() {
@@ -107,7 +107,7 @@ void main() {
 }
 """
 
-fragment_template = """
+fragment_template_vis = """
 varying vec4 v_base_color;
 varying float draw_yes_no;
 void main() {
@@ -119,6 +119,23 @@ void main() {
     }
 }
 """
+# Shader code for non lighted rendering with constant visbility
+vertex_template = """
+varying vec4 v_base_color;
+
+void main() {
+    v_base_color = $color_transform($base_color);
+    gl_Position = $transform($to_vec4($position));
+}
+"""
+
+fragment_template = """
+varying vec4 v_base_color;
+void main() {
+    gl_FragColor = v_base_color;
+}
+"""
+
 
 
 # Functions that can be used as is (don't have template variables)
@@ -182,13 +199,14 @@ class UpdatableMeshVisual(MeshVisual):
     """
     def __init__(self, nb_boxes, vertices=None, faces=None, vertex_colors=None,
                  face_colors=None, color=(0.5, 0.5, 1, 1), vertex_values=None,
-                 meshdata=None, shading=None, mode='triangles', **kwargs):
+                 meshdata=None, shading=None, mode='triangles', variable_vis=False, **kwargs):
 
         # Function for computing phong shading
         # self._phong = Function(phong_template)
 
         # Visual.__init__ -> prepare_transforms() -> uses shading
         self.shading = shading
+        self.variable_vis = variable_vis
 
         if shading is not None:
             Visual.__init__(self, vcode=shading_vertex_template,
@@ -196,9 +214,14 @@ class UpdatableMeshVisual(MeshVisual):
                             **kwargs)
 
         else:
-            Visual.__init__(self, vcode=vertex_template,
-                            fcode=fragment_template,
-                            **kwargs)
+            if variable_vis:
+                Visual.__init__(self, vcode=vertex_template_vis,
+                                fcode=fragment_template_vis,
+                                **kwargs)
+            else:
+                Visual.__init__(self, vcode=vertex_template,
+                                fcode=fragment_template,
+                                **kwargs)
 
         self.set_gl_state('translucent', depth_test=True,
                           cull_face=False)
@@ -266,15 +289,16 @@ class UpdatableMeshVisual(MeshVisual):
             self._color = Color(color)
         self.mesh_data_changed()
 
-        # Initialize all faces as visible
-        if self.mode is 'lines':
-            self._visible_verts = np.ones((faces.shape[0],2,1), dtype=np.float32)
-        else:
-            self._visible_verts = np.ones((faces.shape[0],3,1), dtype=np.float32)
-        
-        self.vis_buffer = VertexBuffer()
-        self.vis_buffer.set_data(self._visible_verts, convert=True)
-        self.shared_program.vert['vis_vert'] = self.vis_buffer
+        if self.variable_vis:
+            # Initialize all faces as visible
+            if self.mode is 'lines':
+                self._visible_verts = np.ones((faces.shape[0],2,1), dtype=np.float32)
+            else:
+                self._visible_verts = np.ones((faces.shape[0],3,1), dtype=np.float32)
+            
+            self.vis_buffer = VertexBuffer()
+            self.vis_buffer.set_data(self._visible_verts, convert=True)
+            self.shared_program.vert['vis_vert'] = self.vis_buffer
 
 
     def set_visible_faces(self, idx_vis):

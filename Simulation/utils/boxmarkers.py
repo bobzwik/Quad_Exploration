@@ -44,9 +44,8 @@ class BoxMarkersVisual(CompoundVisual):
     """
 
     def __init__(self, point_coords=np.array([0,0,0]), width=1, height=1, depth=1, width_segments=1,
-                 height_segments=1, depth_segments=1, planes=None,
-                 vertex_colors=None, face_colors=None,
-                 color=(0.5, 0.5, 1, 1), edge_color=None, **kwargs):
+                 height_segments=1, depth_segments=1, planes=None, vertex_colors=None, face_colors=None,
+                 color=(0.5, 0.5, 1, 1), edge_color=None, variable_vis=False, **kwargs):
         
         self.point_coords = point_coords
         self.nb_points = point_coords.shape[0]
@@ -54,6 +53,7 @@ class BoxMarkersVisual(CompoundVisual):
         self.height = height
         self.depth = depth
         self.color = color
+        self.variable_vis = variable_vis
 
         self._visible_boxes = np.arange(self.nb_points)
 
@@ -79,10 +79,11 @@ class BoxMarkersVisual(CompoundVisual):
                          ('texcoord', np.float32, 2),
                          ('normal', np.float32, 3),
                          ('color', np.float32, 4)])
-        box_to_face = np.zeros([point_coords.shape[0], self.nb_fi], np.uint32)
-        box_to_outl = np.zeros([point_coords.shape[0], self.nb_oi], np.uint32)
         filled_indices = np.zeros([self.nb_fi*point_coords.shape[0], 3], np.uint32)
         outline_indices = np.zeros([self.nb_oi*point_coords.shape[0], 2], np.uint32)
+        if self.variable_vis:
+            box_to_face = np.zeros([point_coords.shape[0], self.nb_fi], np.uint32)
+            box_to_outl = np.zeros([point_coords.shape[0], self.nb_oi], np.uint32)
 
         # Iterate for every marker
         for i in range(self.nb_points):
@@ -95,22 +96,22 @@ class BoxMarkersVisual(CompoundVisual):
 
             # Scale and translate unit box
             vertices[idx_v_start:idx_v_end]['position'] = self.vertices_box['position']*scale + point_coords[i]
-            box_to_face[i,:] = np.arange(idx_fi_start,idx_fi_end)
-            box_to_outl[i,:] = np.arange(idx_oi_start,idx_oi_end)
             filled_indices[idx_fi_start:idx_fi_end] = self.filled_indices_box + idx_v_start
             outline_indices[idx_oi_start:idx_oi_end] = self.outline_indices_box + idx_v_start
+            if self.variable_vis:
+                box_to_face[i,:] = np.arange(idx_fi_start,idx_fi_end)
+                box_to_outl[i,:] = np.arange(idx_oi_start,idx_oi_end)
         
-
-        self.box_to_face = box_to_face
-        self.box_to_outl = box_to_outl
-        self.nb_faces = filled_indices.shape[0]
+        if self.variable_vis:
+            self.box_to_face = box_to_face
+            self.box_to_outl = box_to_outl
 
         # Create MeshVisual for faces and borders
         self._mesh = UpdatableMeshVisual(self.nb_points, vertices['position'], filled_indices,
-                                vertex_colors, face_colors, color, shading=None)
+                                vertex_colors, face_colors, color, shading=None, variable_vis=variable_vis)
         if edge_color:
             self._border = UpdatableMeshVisual(self.nb_points, vertices['position'], outline_indices,
-                                      color=edge_color, mode='lines')
+                                      color=edge_color, mode='lines', variable_vis=variable_vis)
         else:
             self._border = UpdatableMeshVisual(self.nb_points)
 
@@ -120,6 +121,8 @@ class BoxMarkersVisual(CompoundVisual):
 
 
     def set_visible_boxes(self, idx_box_vis):
+        if not self.variable_vis:
+            raise ValueError('Variable visibility must be enabled via "variable_vis"')
         newbox_vis = np.setdiff1d(idx_box_vis, self.visible_boxes)
         oldbox_vis = np.setdiff1d(self.visible_boxes, idx_box_vis)
         
@@ -149,7 +152,7 @@ class BoxMarkersVisual(CompoundVisual):
         self._visible_boxes = visible_boxes
 
 
-    def set_data(self, point_coords=None, width=None, height=None, depth=None, vertex_colors=None, face_colors=None, color=None, edge_color=None, **kwargs):
+    def set_data(self, point_coords=None, width=None, height=None, depth=None, vertex_colors=None, face_colors=None, color=None, edge_color=None):
 
         if point_coords is None:
             point_coords = self.point_coords
@@ -184,6 +187,10 @@ class BoxMarkersVisual(CompoundVisual):
                          ('color', np.float32, 4)])
         filled_indices = np.zeros([self.nb_fi*point_coords.shape[0], 3], np.uint32)
         outline_indices = np.zeros([self.nb_oi*point_coords.shape[0], 2], np.uint32)
+        if self.variable_vis:
+            box_to_face = np.zeros([point_coords.shape[0], self.nb_fi], np.uint32)
+            box_to_outl = np.zeros([point_coords.shape[0], self.nb_oi], np.uint32)
+
 
         scale = np.array([width, height, depth])
 
@@ -200,28 +207,18 @@ class BoxMarkersVisual(CompoundVisual):
             vertices[idx_v_start:idx_v_end]['position'] = self.vertices_box['position']*scale + point_coords[i]
             filled_indices[idx_fi_start:idx_fi_end] = self.filled_indices_box + idx_v_start
             outline_indices[idx_oi_start:idx_oi_end] = self.outline_indices_box + idx_v_start
-        
-        self.nb_faces = filled_indices.shape[0]
+            if self.variable_vis:
+                box_to_face[i,:] = np.arange(idx_fi_start,idx_fi_end)
+                box_to_outl[i,:] = np.arange(idx_oi_start,idx_oi_end)
+
+
+        if self.variable_vis:
+            self.box_to_face = box_to_face
+            self.box_to_outl = box_to_outl
 
         # Create MeshVisual for faces and borders
         self.mesh.set_data(vertices['position'], filled_indices, vertex_colors, face_colors, color)
         self.border.set_data(vertices['position'], outline_indices, color=edge_color)
-
-
-    # def set_face_color(self, indices=None, color=(1,1,1,1)):
-    #     face_colors = self.mesh.mesh_data.get_face_colors()
-    #     if face_colors is None:
-    #         face_colors = np.ones([self.nb_faces, 4])
-        
-    #     if indices is not None:
-    #         for i in range(indices.shape[0]):
-    #             idx_fi_start = self.nb_fi*indices[i]
-    #             idx_fi_end   = self.nb_fi*(indices[i]+1)
-    #             face_colors[idx_fi_start:idx_fi_end] = color
-        
-    #     self.mesh.mesh_data.set_face_colors(face_colors)
-        
-
 
     
     @property
