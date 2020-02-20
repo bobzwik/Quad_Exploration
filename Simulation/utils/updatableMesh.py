@@ -218,17 +218,56 @@ class UpdatableMeshVisual(MeshVisual):
         # Uniform color
         self._color = Color(color)
 
+        # primitive mode
+        self._draw_mode = mode
+
         # Init
         self._bounds = None
         # Note we do not call subclass set_data -- often the signatures
         # do no match.
-        MeshVisual.set_data(
+        UpdatableMeshVisual.set_data(
             self, vertices=vertices, faces=faces, vertex_colors=vertex_colors,
-            face_colors=face_colors, vertex_values=vertex_values,
-            meshdata=meshdata, color=color)
+            face_colors=face_colors, color=color, vertex_values=vertex_values,
+            meshdata=meshdata)
+
+        self.freeze()
+    
+    def set_data(self, vertices=None, faces=None, vertex_colors=None,
+                 face_colors=None, color=None, vertex_values=None,
+                 meshdata=None):
+        """Set the mesh data
+
+        Parameters
+        ----------
+        vertices : array-like | None
+            The vertices.
+        faces : array-like | None
+            The faces.
+        vertex_colors : array-like | None
+            Colors to use for each vertex.
+        face_colors : array-like | None
+            Colors to use for each face.
+        color : instance of Color
+            The color to use.
+        vertex_values : array-like | None
+            Values for each vertex.
+        meshdata : instance of MeshData | None
+            The meshdata.
+        """
+        if meshdata is not None:
+            self._meshdata = meshdata
+        else:
+            self._meshdata = MeshData(vertices=vertices, faces=faces,
+                                      vertex_colors=vertex_colors,
+                                      face_colors=face_colors,
+                                      vertex_values=vertex_values)
+        self._bounds = self._meshdata.get_bounds()
+        if color is not None:
+            self._color = Color(color)
+        self.mesh_data_changed()
 
         # Initialize all faces as visible
-        if mode is 'lines':
+        if self.mode is 'lines':
             self._visible_verts = np.ones((faces.shape[0],2,1), dtype=np.float32)
         else:
             self._visible_verts = np.ones((faces.shape[0],3,1), dtype=np.float32)
@@ -237,10 +276,6 @@ class UpdatableMeshVisual(MeshVisual):
         self.vis_buffer.set_data(self._visible_verts, convert=True)
         self.shared_program.vert['vis_vert'] = self.vis_buffer
 
-        # primitive mode
-        self._draw_mode = mode
-        self.freeze()
-    
 
     def set_visible_faces(self, idx_vis):
         self.visible_verts[idx_vis,:,:] = 1
