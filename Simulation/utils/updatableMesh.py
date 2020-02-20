@@ -244,16 +244,11 @@ class UpdatableMeshVisual(MeshVisual):
 
     def set_visible_faces(self, idx_vis):
         self._visible_verts[idx_vis,:,:] = 1
-        # for i in range(len(idx_vis)):
-        #     print(i)
-            # self.vis_buffer.set_subdata(np.array(1., dtype=np.float32), offset=idx_vis[i])
 
 
     def set_invisible_faces(self, idx_vis):
         self._visible_verts[idx_vis,:,:] = 0
-        # for i in range(len(idx_vis)):
-        #     self.vis_buffer.set_subdata(np.array(0., dtype=np.float32), offset=idx_vis[i])
-    
+ 
     
     def update_vis_buffer(self):
         self.vis_buffer.set_data(self._visible_verts)
