@@ -48,6 +48,7 @@ class BoxMarkersVisual(CompoundVisual):
                  color=(0.5, 0.5, 1, 1), edge_color=None, **kwargs):
         
         self.point_coords = point_coords
+        self.nb_points = point_coords.shape[0]
         self.width = width
         self.height = height
         self.depth = depth
@@ -80,7 +81,7 @@ class BoxMarkersVisual(CompoundVisual):
         outline_indices = np.zeros([self.nb_oi*point_coords.shape[0], 2], np.uint32)
 
         # Iterate for every marker
-        for i in range(point_coords.shape[0]):
+        for i in range(self.nb_points):
             idx_v_start  = self.nb_v*i
             idx_v_end    = self.nb_v*(i+1)
             idx_fi_start = self.nb_fi*i
@@ -97,17 +98,24 @@ class BoxMarkersVisual(CompoundVisual):
         self.nb_faces = filled_indices.shape[0]
 
         # Create MeshVisual for faces and borders
-        self._mesh = UpdatableMeshVisual(vertices['position'], filled_indices,
+        self._mesh = UpdatableMeshVisual(self.nb_points, vertices['position'], filled_indices,
                                 vertex_colors, face_colors, color, shading=None, vert_to_box=verts_to_box)
         if edge_color:
-            self._border = UpdatableMeshVisual(vertices['position'], outline_indices,
+            self._border = UpdatableMeshVisual(self.nb_points, vertices['position'], outline_indices,
                                       color=edge_color, mode='lines', vert_to_box=verts_to_box)
         else:
-            self._border = UpdatableMeshVisual()
+            self._border = UpdatableMeshVisual(self.nb_points)
 
         CompoundVisual.__init__(self, [self._mesh, self._border], **kwargs)
         self.mesh.set_gl_state(polygon_offset_fill=True,
                                polygon_offset=(1, 1), depth_test=True)
+
+
+    # def set_visible_boxes(self, idx_vis):
+    #     self.visible_boxes = np.zeros((self.nb_points, 1), dtype=bool)
+    #     self.visible_boxes[idx_vis] = 1
+    #     self._mesh.
+
 
     def set_data(self, point_coords=None, width=None, height=None, depth=None, vertex_colors=None, face_colors=None, color=None, edge_color=None, **kwargs):
 

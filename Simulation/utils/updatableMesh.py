@@ -13,6 +13,7 @@ from vispy.visuals.visual import Visual
 from vispy.visuals.mesh import MeshVisual
 from vispy.visuals.shaders import Function, FunctionChain
 from vispy.gloo import VertexBuffer, IndexBuffer
+from vispy.gloo.buffer import DataBuffer, Buffer
 from vispy.geometry import MeshData
 from vispy.color import Color, get_colormap
 from vispy.visuals.shaders.variable import Variable, Varying
@@ -98,17 +99,24 @@ void main() {
 # Shader code for non lighted rendering
 vertex_template = """
 varying vec4 v_base_color;
-
+varying float draw_yes_no;
 void main() {
     v_base_color = $color_transform($base_color);
     gl_Position = $transform($to_vec4($position));
+    draw_yes_no = $vis_vert.x;
 }
 """
 
 fragment_template = """
 varying vec4 v_base_color;
+varying float draw_yes_no;
 void main() {
-    gl_FragColor = v_base_color;
+    if (draw_yes_no > 0.5){
+        gl_FragColor = v_base_color;
+    }
+    if (draw_yes_no < 0.5){
+        discard;
+    }
 }
 """
 
@@ -172,9 +180,9 @@ class UpdatableMeshVisual(MeshVisual):
     **kwargs : dict
         Keyword arguments to pass to `Visual`.
     """
-    def __init__(self, vertices=None, faces=None, vertex_colors=None,
+    def __init__(self, nb_boxes, vertices=None, faces=None, vertex_colors=None,
                  face_colors=None, color=(0.5, 0.5, 1, 1), vertex_values=None,
-                 meshdata=None, shading=None, mode='triangles', vert_to_box=None, **kwargs):
+                 meshdata=None, shading=None, mode='triangles', vert_to_box=None, visible_boxes=None, **kwargs):
 
         # Function for computing phong shading
         # self._phong = Function(phong_template)
@@ -212,10 +220,6 @@ class UpdatableMeshVisual(MeshVisual):
         elif vert_to_box.shape[0] != vertices.shape[0]:
             raise ValueError('verts_to_box must have a value for every vertex')
 
-        self._vert_to_box = IndexBuffer(vert_to_box)
-        self.shared_program.vert['vert_to_box'] = Variable('attribute int vert_to_box')
-        self.shared_program.vert['vert_to_box'] = self._vert_to_box
-
         # Uniform color
         self._color = Color(color)
 
@@ -228,8 +232,31 @@ class UpdatableMeshVisual(MeshVisual):
             face_colors=face_colors, vertex_values=vertex_values,
             meshdata=meshdata, color=color)
 
-        print(self._vert_to_box)
+        # self._vert_to_box = IndexBuffer()
+        # self._vert_to_box.set_data(vert_to_box, convert=True)
+        # self.shared_program.vert['vert_to_box'] = Variable('attribute float vert_to_box')
+        # self.shared_program.vert['vert_to_box'] = self._vert_to_box
+        if mode is 'lines':
+            self._visible_verts = np.ones((faces.shape[0],2,3), dtype=np.float32)
+        else:
+            self._visible_verts = np.ones((faces.shape[0],3,3), dtype=np.float32)
+        print(self._visible_verts.shape)
+        
+        # self.shared_program.vert['visible_verts'] = Variable('attribute float vis_vert')
+        # Variable('varying float vis_vert')
+        # print(vis_vert)
+        visible = VertexBuffer()
+        visible.set_data(self._visible_verts, convert=True)
+        print(visible.size)
+        print(visible.nbytes)
+        # print(visible)
+        # Variable('attribute float vis_vert')
+        # self.shared_program.vert['vis_vert'] = visible
+        self.shared_program.vert['vis_vert'] = visible
+        # print(self.shared_program.vert['vis_vert']._value)
 
         # primitive mode
         self._draw_mode = mode
         self.freeze()
+    
+
