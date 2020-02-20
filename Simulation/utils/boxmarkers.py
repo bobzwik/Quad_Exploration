@@ -54,8 +54,6 @@ class BoxMarkersVisual(CompoundVisual):
         self.color = color
         self.variable_vis = variable_vis
 
-        self._visible_boxes = np.arange(self.nb_points)
-
         # Create a unit box
         width_box  = 1
         height_box = 1
@@ -104,6 +102,7 @@ class BoxMarkersVisual(CompoundVisual):
         if self.variable_vis:
             self.box_to_face = box_to_face
             self.box_to_outl = box_to_outl
+            self._visible_boxes = np.arange(self.nb_points)
 
         # Create MeshVisual for faces and borders
         self._mesh = UpdatableMeshVisual(self.nb_points, vertices['position'], filled_indices,
@@ -118,6 +117,7 @@ class BoxMarkersVisual(CompoundVisual):
         self.mesh.set_gl_state(polygon_offset_fill=True,
                                polygon_offset=(1, 1), depth_test=True)
 
+        self.freeze()
 
     def set_visible_boxes(self, idx_box_vis):
         if not self.variable_vis:
@@ -143,11 +143,15 @@ class BoxMarkersVisual(CompoundVisual):
 
     @property
     def visible_boxes(self):
+        if not self.variable_vis:
+            raise ValueError('Variable visibility must be enabled via "variable_vis"')
         return self._visible_boxes
 
 
     @visible_boxes.setter
     def visible_boxes(self, visible_boxes):
+        if not self.variable_vis:
+            raise ValueError('Variable visibility must be enabled via "variable_vis"')
         self._visible_boxes = visible_boxes
 
 
@@ -177,6 +181,8 @@ class BoxMarkersVisual(CompoundVisual):
             color = self.color
         else:
             self.color = color
+
+        self.nb_points = point_coords.shape[0]
 
         # Create empty arrays for vertices, filled_indices and outline_indices
         vertices = np.zeros(self.nb_v*point_coords.shape[0],
@@ -214,6 +220,7 @@ class BoxMarkersVisual(CompoundVisual):
         if self.variable_vis:
             self.box_to_face = box_to_face
             self.box_to_outl = box_to_outl
+            self._visible_boxes = np.arange(self.nb_points)
 
         # Create MeshVisual for faces and borders
         self.mesh.set_data(vertices['position'], filled_indices, vertex_colors, face_colors, color)
