@@ -93,8 +93,8 @@ def _build_color_transform(data, cmap, clim=(0., 1.)):
     return fun
 
 
-class UpdatableMeshVisual(MeshVisual):
-    """Updatable Mesh visual
+class VarVisMeshVisual(MeshVisual):
+    """Variable Visibility Mesh visual
 
     Parameters
     ----------
@@ -167,7 +167,7 @@ class UpdatableMeshVisual(MeshVisual):
         self._bounds = None
         # Note we do not call subclass set_data -- often the signatures
         # do no match.
-        UpdatableMeshVisual.set_data(
+        VarVisMeshVisual.set_data(
             self, vertices=vertices, faces=faces, vertex_colors=vertex_colors,
             face_colors=face_colors, color=color, vertex_values=vertex_values,
             meshdata=meshdata)

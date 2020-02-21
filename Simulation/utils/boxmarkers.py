@@ -7,7 +7,7 @@ from vispy.geometry import create_box
 from vispy.visuals.mesh import MeshVisual
 from vispy.visuals.visual import CompoundVisual
 from vispy.scene.visuals import create_visual_node
-from utils.updatableMesh import UpdatableMeshVisual
+from utils.varvisMesh import VarVisMeshVisual
 
 class BoxMarkersVisual(CompoundVisual):
     """Visual that displays a box.
@@ -107,13 +107,13 @@ class BoxMarkersVisual(CompoundVisual):
             self._visible_boxes = np.arange(self.nb_points)
 
         # Create MeshVisual for faces and borders
-        self._mesh = UpdatableMeshVisual(self.nb_points, vertices['position'], filled_indices,
+        self._mesh = VarVisMeshVisual(self.nb_points, vertices['position'], filled_indices,
                                 vertex_colors, face_colors, color, variable_vis=variable_vis)
         if edge_color:
-            self._border = UpdatableMeshVisual(self.nb_points, vertices['position'], outline_indices,
+            self._border = VarVisMeshVisual(self.nb_points, vertices['position'], outline_indices,
                                       color=edge_color, mode='lines', variable_vis=variable_vis)
         else:
-            self._border = UpdatableMeshVisual(self.nb_points)
+            self._border = VarVisMeshVisual(self.nb_points)
 
         CompoundVisual.__init__(self, [self._mesh, self._border], **kwargs)
         self.mesh.set_gl_state(polygon_offset_fill=True,
