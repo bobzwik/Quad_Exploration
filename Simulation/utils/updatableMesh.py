@@ -18,84 +18,6 @@ from vispy.geometry import MeshData
 from vispy.color import Color, get_colormap
 from vispy.visuals.shaders.variable import Variable, Varying
 
-# Shaders for lit rendering (using phong shading)
-shading_vertex_template = """
-varying vec3 v_normal_vec;
-varying vec3 v_light_vec;
-varying vec3 v_eye_vec;
-
-varying vec4 v_ambientk;
-varying vec4 v_light_color;
-varying vec4 v_base_color;
-
-void main() {
-    v_ambientk = $ambientk;
-    v_light_color = $light_color;
-    v_base_color = $color_transform($base_color);
-
-
-    vec4 pos_scene = $visual2scene($to_vec4($position));
-    vec4 normal_scene = $visual2scene(vec4($normal, 1.0));
-    vec4 origin_scene = $visual2scene(vec4(0.0, 0.0, 0.0, 1.0));
-
-    normal_scene /= normal_scene.w;
-    origin_scene /= origin_scene.w;
-
-    vec3 normal = normalize(normal_scene.xyz - origin_scene.xyz);
-    v_normal_vec = normal; //VARYING COPY
-
-    vec4 pos_front = $scene2doc(pos_scene);
-    pos_front.z += 0.01;
-    pos_front = $doc2scene(pos_front);
-    pos_front /= pos_front.w;
-
-    vec4 pos_back = $scene2doc(pos_scene);
-    pos_back.z -= 0.01;
-    pos_back = $doc2scene(pos_back);
-    pos_back /= pos_back.w;
-
-    vec3 eye = normalize(pos_front.xyz - pos_back.xyz);
-    v_eye_vec = eye; //VARYING COPY
-
-    vec3 light = normalize($light_dir.xyz);
-    v_light_vec = light; //VARYING COPY
-
-    gl_Position = $transform($to_vec4($position));
-}
-"""
-
-shading_fragment_template = """
-varying vec3 v_normal_vec;
-varying vec3 v_light_vec;
-varying vec3 v_eye_vec;
-
-varying vec4 v_ambientk;
-varying vec4 v_light_color;
-varying vec4 v_base_color;
-
-void main() {
-    //DIFFUSE
-    float diffusek = dot(v_light_vec, v_normal_vec);
-    // clamp, because 0 < theta < pi/2
-    diffusek  = clamp(diffusek, 0.0, 1.0);
-    vec4 diffuse_color = v_light_color * diffusek;
-
-    //SPECULAR
-    //reflect light wrt normal for the reflected ray, then
-    //find the angle made with the eye
-    float speculark = 0.0;
-    if ($shininess > 0.) {
-        speculark = dot(reflect(v_light_vec, v_normal_vec), v_eye_vec);
-        speculark = clamp(speculark, 0.0, 1.0);
-        //raise to the material's shininess, multiply with a
-        //small factor for spread
-        speculark = 20.0 * pow(speculark, 1.0 / $shininess);
-    }
-    vec4 specular_color = v_light_color * speculark;
-    gl_FragColor = v_base_color * (v_ambientk + diffuse_color) + specular_color;
-}
-"""  # noqa
-
 # Shader code for non lighted rendering with variable visibility
 vertex_template_vis = """
 varying vec4 v_base_color;
@@ -172,7 +94,7 @@ def _build_color_transform(data, cmap, clim=(0., 1.)):
 
 
 class UpdatableMeshVisual(MeshVisual):
-    """Mesh visual
+    """Updatable Mesh visual
 
     Parameters
     ----------
@@ -194,6 +116,8 @@ class UpdatableMeshVisual(MeshVisual):
         Shading to use.
     mode : str
         The drawing mode.
+    variable_vis : bool
+        If instance of UpdatableMeshVisual has variable visibility
     **kwargs : dict
         Keyword arguments to pass to `Visual`.
     """
@@ -201,27 +125,22 @@ class UpdatableMeshVisual(MeshVisual):
                  face_colors=None, color=(0.5, 0.5, 1, 1), vertex_values=None,
                  meshdata=None, shading=None, mode='triangles', variable_vis=False, **kwargs):
 
-        # Function for computing phong shading
-        # self._phong = Function(phong_template)
-
         # Visual.__init__ -> prepare_transforms() -> uses shading
-        self.shading = shading
-        self.variable_vis = variable_vis
 
         if shading is not None:
-            Visual.__init__(self, vcode=shading_vertex_template,
-                            fcode=shading_fragment_template,
-                            **kwargs)
+            raise ValueError('"shading" must be "None"')
+        
+        self.shading = shading
+        self._variable_vis = variable_vis
 
+        if variable_vis:
+            Visual.__init__(self, vcode=vertex_template_vis,
+                            fcode=fragment_template_vis,
+                            **kwargs)
         else:
-            if variable_vis:
-                Visual.__init__(self, vcode=vertex_template_vis,
-                                fcode=fragment_template_vis,
-                                **kwargs)
-            else:
-                Visual.__init__(self, vcode=vertex_template,
-                                fcode=fragment_template,
-                                **kwargs)
+            Visual.__init__(self, vcode=vertex_template,
+                            fcode=fragment_template,
+                            **kwargs)
 
         self.set_gl_state('translucent', depth_test=True,
                           cull_face=False)
@@ -295,56 +214,47 @@ class UpdatableMeshVisual(MeshVisual):
                 self._visible_verts = np.ones((faces.shape[0],2,1), dtype=np.float32)
             else:
                 self._visible_verts = np.ones((faces.shape[0],3,1), dtype=np.float32)
-            
+            # Create visibility VertexBuffer
             self.vis_buffer = VertexBuffer()
             self.vis_buffer.set_data(self._visible_verts, convert=True)
             self.shared_program.vert['vis_vert'] = self.vis_buffer
 
 
     def set_visible_faces(self, idx_vis):
+        """Set idx_vis indexes of visible_verts to "visible" (1).
+        """
         self.visible_verts[idx_vis,:,:] = 1
 
 
     def set_invisible_faces(self, idx_vis):
+        """Set idx_vis indexes of visible_verts to "invisible" (0).
+        """
         self.visible_verts[idx_vis,:,:] = 0
  
     
     def update_vis_buffer(self):
+        """Update the visibility VertexBuffer.
+        """
         self.vis_buffer.set_data(self.visible_verts)
         self.shared_program.vert['vis_vert'] = self.vis_buffer
         
     
     @property
     def visible_verts(self):
+        """Bool (float) array indicating which vertices are visible (1) and which are invisible (0).
+        """
         return self._visible_verts
-
 
     @visible_verts.setter
     def visible_verts(self, visible_verts):
         self._visible_verts = visible_verts
-        
-    
-    # def set_visible_faces(self, idx_vis):
-    #     # nfaces = self.mesh_data.n_faces
-    #     # if self.mode is 'lines':
-    #         # self._visible_verts = np.zeros((nfaces,2,1), dtype=np.float32)
-    #         # self._visible_verts[idx_vis,:,:] = 1
-    #     # else:
-    #         # self._visible_verts = np.zeros((nfaces,3,1), dtype=np.float32)
-    #         # self._visible_verts[idx_vis,:,:] = 1
-    #     self._visible_verts[idx_vis,:,:] = 1
-    #     self.vis_buffer.set_data(self._visible_verts)
-    #     self.shared_program.vert['vis_vert'] = self.vis_buffer
 
-    # def set_invisible_faces(self, idx_vis):
-    #     # nfaces = self.mesh_data.n_faces
-    #     # if self.mode is 'lines':
-    #         # self._visible_verts = np.zeros((nfaces,2,1), dtype=np.float32)
-    #         # self._visible_verts[idx_vis,:,:] = 0
-    #     # else:
-    #         # self._visible_verts = np.zeros((nfaces,3,1), dtype=np.float32)
-    #         # self._visible_verts[idx_vis,:,:] = 0
-    #     self._visible_verts[idx_vis,:,:] = 0
-    #     self.vis_buffer.set_data(self._visible_verts)
-    #     self.shared_program.vert['vis_vert'] = self.vis_buffer
+    @property
+    def variable_vis(self):
+        """Bool if instance of UpdatableMeshVisual posseses variable visibility.
+        """
+        return self._variable_vis
 
+    @variable_vis.setter
+    def variable_vis(self, variable_vis):
+        raise ValueError('Not allowed to change "variable_vis" after initialization.')

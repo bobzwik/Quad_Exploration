@@ -52,7 +52,7 @@ class BoxMarkersVisual(CompoundVisual):
         self.height = height
         self.depth = depth
         self.color = color
-        self.variable_vis = variable_vis
+        self._variable_vis = variable_vis
 
         # Create a unit box
         width_box  = 1
@@ -79,6 +79,8 @@ class BoxMarkersVisual(CompoundVisual):
         filled_indices = np.zeros([self.nb_fi*point_coords.shape[0], 3], np.uint32)
         outline_indices = np.zeros([self.nb_oi*point_coords.shape[0], 2], np.uint32)
         if self.variable_vis:
+            # "box_to_face" and "box_to_outl" represent array of faces and 
+            # outlines indexes associated to each box
             box_to_face = np.zeros([point_coords.shape[0], self.nb_fi], np.uint32)
             box_to_outl = np.zeros([point_coords.shape[0], self.nb_oi], np.uint32)
 
@@ -106,7 +108,7 @@ class BoxMarkersVisual(CompoundVisual):
 
         # Create MeshVisual for faces and borders
         self._mesh = UpdatableMeshVisual(self.nb_points, vertices['position'], filled_indices,
-                                vertex_colors, face_colors, color, shading=None, variable_vis=variable_vis)
+                                vertex_colors, face_colors, color, variable_vis=variable_vis)
         if edge_color:
             self._border = UpdatableMeshVisual(self.nb_points, vertices['position'], outline_indices,
                                       color=edge_color, mode='lines', variable_vis=variable_vis)
@@ -119,40 +121,44 @@ class BoxMarkersVisual(CompoundVisual):
 
         self.freeze()
 
+
     def set_visible_boxes(self, idx_box_vis):
+        """Set which boxes are visible.
+        
+        Parameters
+        ----------
+        
+        idx_box_vis : Array like
+            Index array of ALL visible boxes of point_coords
+        """
+
         if not self.variable_vis:
             raise ValueError('Variable visibility must be enabled via "variable_vis"')
+        
+        # Find which boxes are now visible that weren't last update of 'self.visible_boxes',
+        # and vice-versa
         newbox_vis = np.setdiff1d(idx_box_vis, self.visible_boxes)
         oldbox_vis = np.setdiff1d(self.visible_boxes, idx_box_vis)
         
+        # Get the new visible vertices indexes for the faces (mesh) and outlines (border)
+        # and the new invisible vertices indexes
         idx_face_vis = np.ravel(self.box_to_face[newbox_vis])
         idx_outl_vis = np.ravel(self.box_to_outl[newbox_vis])
         idx_face_invis = np.ravel(self.box_to_face[oldbox_vis])
         idx_outl_invis = np.ravel(self.box_to_outl[oldbox_vis])
 
+        # Update mesh visibility bool array
         self.mesh.set_visible_faces(idx_face_vis)
         self.mesh.set_invisible_faces(idx_face_invis)
         self.mesh.update_vis_buffer()
         
+        # Update border visibility bool array
         self.border.set_visible_faces(idx_outl_vis)
         self.border.set_invisible_faces(idx_outl_invis)
         self.border.update_vis_buffer()
 
+        # Update 'self.visible_boxes'
         self.visible_boxes = idx_box_vis
-
-
-    @property
-    def visible_boxes(self):
-        if not self.variable_vis:
-            raise ValueError('Variable visibility must be enabled via "variable_vis"')
-        return self._visible_boxes
-
-
-    @visible_boxes.setter
-    def visible_boxes(self, visible_boxes):
-        if not self.variable_vis:
-            raise ValueError('Variable visibility must be enabled via "variable_vis"')
-        self._visible_boxes = visible_boxes
 
 
     def set_data(self, point_coords=None, width=None, height=None, depth=None, vertex_colors=None, face_colors=None, color=None, edge_color=None):
@@ -193,9 +199,10 @@ class BoxMarkersVisual(CompoundVisual):
         filled_indices = np.zeros([self.nb_fi*point_coords.shape[0], 3], np.uint32)
         outline_indices = np.zeros([self.nb_oi*point_coords.shape[0], 2], np.uint32)
         if self.variable_vis:
+            # "box_to_face" and "box_to_outl" represent array of faces and 
+            # outlines indexes associated to each box
             box_to_face = np.zeros([point_coords.shape[0], self.nb_fi], np.uint32)
             box_to_outl = np.zeros([point_coords.shape[0], self.nb_oi], np.uint32)
-
 
         scale = np.array([width, height, depth])
 
@@ -216,7 +223,6 @@ class BoxMarkersVisual(CompoundVisual):
                 box_to_face[i,:] = np.arange(idx_fi_start,idx_fi_end)
                 box_to_outl[i,:] = np.arange(idx_oi_start,idx_oi_end)
 
-
         if self.variable_vis:
             self.box_to_face = box_to_face
             self.box_to_outl = box_to_outl
@@ -227,6 +233,30 @@ class BoxMarkersVisual(CompoundVisual):
         self.border.set_data(vertices['position'], outline_indices, color=edge_color)
 
     
+    @property
+    def variable_vis(self):
+        """Bool if instance of BoxMarkersVisual posseses variable visibility.
+        """
+        return self._variable_vis
+
+    @variable_vis.setter
+    def variable_vis(self, variable_vis):
+        raise ValueError('Not allowed to change "variable_vis" after initialization.')
+    
+    @property
+    def visible_boxes(self):
+        """Array of indexes of boxes that are currently visible.
+        """
+        if not self.variable_vis:
+            raise ValueError('Variable visibility must be enabled via "variable_vis".')
+        return self._visible_boxes
+
+    @visible_boxes.setter
+    def visible_boxes(self, visible_boxes):
+        if not self.variable_vis:
+            raise ValueError('Variable visibility must be enabled via "variable_vis".')
+        self._visible_boxes = visible_boxes
+
     @property
     def mesh(self):
         """The vispy.visuals.MeshVisual that used to fill in.
