@@ -20,6 +20,7 @@ from vispy.visuals.shaders.variable import Variable, Varying
 
 # Shader code for non lighted rendering with variable visibility
 vertex_template_vis = """
+#version 150
 varying vec4 v_base_color;
 varying float draw_yes_no;
 void main() {
@@ -30,6 +31,7 @@ void main() {
 """
 
 fragment_template_vis = """
+#version 150
 varying vec4 v_base_color;
 varying float draw_yes_no;
 void main() {
@@ -43,6 +45,7 @@ void main() {
 """
 # Shader code for non lighted rendering with constant visbility
 vertex_template = """
+#version 150
 varying vec4 v_base_color;
 
 void main() {
@@ -52,6 +55,7 @@ void main() {
 """
 
 fragment_template = """
+#version 150
 varying vec4 v_base_color;
 void main() {
     gl_FragColor = v_base_color;
@@ -211,12 +215,12 @@ class VarVisMeshVisual(MeshVisual):
         if self.variable_vis:
             # Initialize all faces as visible
             if self.mode is 'lines':
-                self._visible_verts = np.ones((faces.shape[0],2,1), dtype=np.float32)
+                self._visible_verts = np.ones((faces.shape[0],2,1), dtype=np.uint8)
             else:
-                self._visible_verts = np.ones((faces.shape[0],3,1), dtype=np.float32)
+                self._visible_verts = np.ones((faces.shape[0],3,1), dtype=np.uint8)
             # Create visibility VertexBuffer
             self.vis_buffer = VertexBuffer()
-            self.vis_buffer.set_data(self._visible_verts, convert=True)
+            self.vis_buffer.set_data(self._visible_verts)
             self.shared_program.vert['vis_vert'] = self.vis_buffer
 
 
