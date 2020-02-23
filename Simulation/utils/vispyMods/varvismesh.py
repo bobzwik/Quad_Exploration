@@ -13,8 +13,6 @@
 
 """ A MeshVisual Visual that uses the new shader Function.
 """
-from __future__ import division
-
 import numpy as np
 
 from vispy.visuals.visual import Visual
@@ -25,7 +23,7 @@ from vispy.geometry import MeshData
 from vispy.color import Color, get_colormap
 from vispy.gloo.glir import GlirProgram
 
-# Monkey patch to make possible int8 VertexBuffer (for visibility array)
+# Monkey patch to make possible int8 VertexBuffer (for faster visibility array)
 NEW_ATYPEINFO = {
     'float': (1, gl.GL_FLOAT, np.float32),
     'vec2': (2, gl.GL_FLOAT, np.float32),

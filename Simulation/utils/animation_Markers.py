@@ -10,70 +10,15 @@ import numpy as np
 from numpy import pi
 import vispy
 from vispy import app, scene
-from vispy.scene import visuals
-from vispy.color import ColorArray
 import time
 import sys
 
 import utils
-from utils.boxmarkers import BoxMarkers
+from utils.vispyMods import ColorMarkers, NonUpdatingTurntable
 import config
 
 rad2deg = 180.0/pi
 deg2rad = pi/180.0
-
-class ColorMarkers(visuals.Markers):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-    
-    def set_color(self, face_color='white'):
-        face_color = ColorArray(face_color).rgba
-        if len(face_color) == 1:
-            face_color = face_color[0]
-
-        self._data['a_bg_color'] = face_color
-        self._vbo.set_data(self._data)
-        self.update()
-
-class NonUpdatingTurntable(vispy.scene.cameras.TurntableCamera):
-    def __init__(self, **kwargs):
-        super(NonUpdatingTurntable, self).__init__(**kwargs)
-    
-    @property
-    def azimuth(self):
-        """ The angle of the camera in degrees around the y axis. An angle of
-        0 places the camera within the (y, z) plane.
-        """
-        return self._azimuth
-
-    @azimuth.setter
-    def azimuth(self, azim):
-        azim = float(azim)
-        while azim < -180:
-            azim += 360
-        while azim > 180:
-            azim -= 360
-        self._azimuth = azim
-        # self.view_changed()       # Don't update view right now
-    
-    @property
-    def center(self):
-        """ The center location for this camera
-
-        The exact meaning of this value differs per type of camera, but
-        generally means the point of interest or the rotation point.
-        """
-        return self._center or (0, 0, 0)
-    
-    @center.setter
-    def center(self, val):
-        if len(val) == 2:
-            self._center = float(val[0]), float(val[1]), 0.0
-        elif len(val) == 3:
-            self._center = float(val[0]), float(val[1]), float(val[2])
-        else:
-            raise ValueError('Center must be a 2 or 3 element tuple')
-        # self.view_changed()       # Don't update view right now
 
 class MyScene(vispy.scene.SceneCanvas):
     def __init__(self, pointcloud, **kwargs):
@@ -91,7 +36,8 @@ class MyScene(vispy.scene.SceneCanvas):
         self.timer = app.Timer()
         self.freeze()
 
-def sameAxisAnimation(t_all, waypoints, pos_all, quat_all, euler_all, sDes_tr_all, Ts, params, xyzType, yawType, potfld, notInRange_all, inRange_all, inField_all, ifsave):
+
+def third_PV_animation(t_all, waypoints, pos_all, quat_all, euler_all, sDes_tr_all, Ts, params, xyzType, yawType, potfld, notInRange_all, inRange_all, inField_all, ifsave):
     
     x = pos_all[:,0]
     y = pos_all[:,1]
@@ -123,13 +69,15 @@ def sameAxisAnimation(t_all, waypoints, pos_all, quat_all, euler_all, sDes_tr_al
         flip = view.camera.flip
         view.camera.flip = flip[0], not flip[1], flip[2] # Flip camera in Y axis
 
+    # Get initial points
+    canvas.yellowPoints = np.where(np.logical_or(notInRange_all[0,:], inRange_all[0,:]))[0]
+    canvas.redPoints = np.where(inField_all[0,:])[0]
+
     # Create color array
     color_points = (1, 1, 0.5, 1)
     color_field  = (1, 0, 0, 1)
     color_edges  = (0, 0, 0, 0.3)
     colors = np.ones((potfld.num_points, 4), dtype=np.float32)
-    canvas.yellowPoints = np.where(np.logical_or(notInRange_all[0,:], inRange_all[0,:]))[0]
-    canvas.redPoints = np.where(inField_all[0,:])[0]
 
     colors[canvas.yellowPoints] = color_points
     colors[canvas.redPoints] = color_field
@@ -137,11 +85,10 @@ def sameAxisAnimation(t_all, waypoints, pos_all, quat_all, euler_all, sDes_tr_al
     # create scatter object and fill in the data
     scatter = ColorMarkers()
     scatter.set_data(canvas.pointcloud, edge_color=color_edges, face_color=colors, size=6)
-    # scatter.set_gl_state('translucent', cull_face=False)
     view.add(scatter)
 
     # Add a colored 3D axis for orientation
-    axis = visuals.XYZAxis(parent=view.scene)
+    axis = scene.visuals.XYZAxis(parent=view.scene)
 
     # Lines to draw quadrotor and past trajectory
     line1 = scene.visuals.LinePlot([[],[],[]], width=6, color='red',  marker_size=0, parent=view.scene)
@@ -189,6 +136,7 @@ def sameAxisAnimation(t_all, waypoints, pos_all, quat_all, euler_all, sDes_tr_al
                 z = -z
                 z_from0 = -z_from0
                 quat = np.array([quat[0], -quat[1], -quat[2], quat[3]])
+                psi_diff = -psi_diff
         
             # Find motor positions
             R = utils.quat2Dcm(quat)    
@@ -204,15 +152,17 @@ def sameAxisAnimation(t_all, waypoints, pos_all, quat_all, euler_all, sDes_tr_al
             line3.set_data(np.array([x_from0, y_from0, z_from0]).T, marker_size=0)
 
             # Change pointcloud colors
-            canvas.yellowPoints = np.where(np.logical_or(notInRange_all[idx_now,:], inRange_all[idx_now,:]))[0]
-            canvas.redPoints = np.where(inField_all[idx_now,:])[0]
-            colors[canvas.yellowPoints] = color_points
-            colors[canvas.redPoints] = color_field
-
-            scatter.set_color(face_color=colors)
+            yellowPoints = np.where(np.logical_or(notInRange_all[idx_now,:], inRange_all[idx_now,:]))[0]
+            redPoints = np.where(inField_all[idx_now,:])[0]
+            if np.setdiff1d(redPoints, canvas.redPoints).size != 0:
+                canvas.yellowPoints = yellowPoints
+                canvas.redPoints = redPoints
+                colors[canvas.yellowPoints] = color_points
+                colors[canvas.redPoints] = color_field
+                scatter.set_color(face_color=colors)
 
             # Change camera angle and position
-            view.camera.azimuth = view.camera.azimuth-psi_diff
+            view.camera.azimuth = view.camera.azimuth + psi_diff
             view.camera.center = [x, y, z]
             
             # Update view

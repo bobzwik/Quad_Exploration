@@ -16,7 +16,7 @@ from vispy.geometry import create_box
 from vispy.visuals.mesh import MeshVisual
 from vispy.visuals.visual import CompoundVisual
 from vispy.scene.visuals import create_visual_node
-from utils.varvisMesh import VarVisMeshVisual
+from .varvismesh import VarVisMeshVisual
 
 class BoxMarkersVisual(CompoundVisual):
     """Visual that displays a box.

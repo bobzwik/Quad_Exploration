@@ -16,51 +16,11 @@ import time
 import sys
 
 import utils
-from utils.boxmarkers import BoxMarkers
+from utils.vispyMods import BoxMarkers, NonUpdatingTurntable
 import config
 
 rad2deg = 180.0/pi
 deg2rad = pi/180.0
-
-class NonUpdatingTurntable(vispy.scene.cameras.TurntableCamera):
-    def __init__(self, **kwargs):
-        super(NonUpdatingTurntable, self).__init__(**kwargs)
-    
-    @property
-    def azimuth(self):
-        """ The angle of the camera in degrees around the y axis. An angle of
-        0 places the camera within the (y, z) plane.
-        """
-        return self._azimuth
-
-    @azimuth.setter
-    def azimuth(self, azim):
-        azim = float(azim)
-        while azim < -180:
-            azim += 360
-        while azim > 180:
-            azim -= 360
-        self._azimuth = azim
-        # self.view_changed()       # Don't update view right now
-    
-    @property
-    def center(self):
-        """ The center location for this camera
-
-        The exact meaning of this value differs per type of camera, but
-        generally means the point of interest or the rotation point.
-        """
-        return self._center or (0, 0, 0)
-    
-    @center.setter
-    def center(self, val):
-        if len(val) == 2:
-            self._center = float(val[0]), float(val[1]), 0.0
-        elif len(val) == 3:
-            self._center = float(val[0]), float(val[1]), float(val[2])
-        else:
-            raise ValueError('Center must be a 2 or 3 element tuple')
-        # self.view_changed()       # Don't update view right now
 
 class MyScene(vispy.scene.SceneCanvas):
     def __init__(self, pointcloud, **kwargs):
@@ -78,7 +38,7 @@ class MyScene(vispy.scene.SceneCanvas):
         self.timer = app.Timer()
         self.freeze()
 
-def sameAxisAnimation(t_all, waypoints, pos_all, quat_all, euler_all, sDes_tr_all, Ts, params, xyzType, yawType, potfld, notInRange_all, inRange_all, inField_all, ifsave):
+def third_PV_animation(t_all, waypoints, pos_all, quat_all, euler_all, sDes_tr_all, Ts, params, xyzType, yawType, potfld, notInRange_all, inRange_all, inField_all, ifsave):
     
     x = pos_all[:,0]
     y = pos_all[:,1]
@@ -110,18 +70,19 @@ def sameAxisAnimation(t_all, waypoints, pos_all, quat_all, euler_all, sDes_tr_al
         flip = view.camera.flip
         view.camera.flip = flip[0], not flip[1], flip[2] # Flip camera in Y axis
 
-    # Create color array
+    # Get initial points
     canvas.yellowPoints = np.where(np.logical_or(notInRange_all[0,:], inRange_all[0,:]))[0]
     canvas.redPoints = np.where(inField_all[0,:])[0]
 
     # Create scatter object and fill in the data
     color_points = (1, 1, 0.5, 1)
-    color_field  = (1, 0, 0, 1)
+    color_field  = (1, 0, 0, 0.5)
     color_edges  = (0, 0, 0, 0.3)
-    scatter = BoxMarkers(potfld.pointcloud, 0.1, 0.1, 0.1, color=color_points, edge_color=color_edges, parent=view.scene)
-    scatter.set_face_color(indices=canvas.yellowPoints, color=color_points)
-    scatter.set_face_color(indices=canvas.redPoints, color=color_field)
-    scatter.mesh.mesh_data_changed()
+    scatter = BoxMarkers(potfld.pointcloud, 0.1, 0.1, 0.1, 
+                    color=color_points, edge_color=color_edges, parent=view.scene)
+    scatter_field = BoxMarkers(potfld.pointcloud, potfld.gridStep[0], potfld.gridStep[1], potfld.gridStep[2], 
+                    color=color_field, edge_color=color_edges, variable_vis=True, parent=view.scene)
+    scatter_field.set_visible_boxes(canvas.redPoints)
 
     # Add a colored 3D axis for orientation
     axis = visuals.XYZAxis(parent=view.scene)
@@ -172,6 +133,7 @@ def sameAxisAnimation(t_all, waypoints, pos_all, quat_all, euler_all, sDes_tr_al
                 z = -z
                 z_from0 = -z_from0
                 quat = np.array([quat[0], -quat[1], -quat[2], quat[3]])
+                psi_diff = -psi_diff
         
             # Find motor positions
             R = utils.quat2Dcm(quat)    
@@ -186,21 +148,14 @@ def sameAxisAnimation(t_all, waypoints, pos_all, quat_all, euler_all, sDes_tr_al
             line2.set_data(np.array([motorPoints[0, 3:6], motorPoints[1, 3:6], motorPoints[2, 3:6]]).T, marker_size=0,)
             line3.set_data(np.array([x_from0, y_from0, z_from0]).T, marker_size=0)
 
-            # Change pointcloud colors
-            allNewYellowPoints = np.where(np.logical_or(notInRange_all[idx_now,:], inRange_all[idx_now,:]))[0]
-            allNewRedPoints = np.where(inField_all[idx_now,:])[0]
-            newYellowPoints = np.setdiff1d(canvas.redPoints, allNewRedPoints)
-            newRedPoints = np.setdiff1d(allNewRedPoints, canvas.redPoints)
-            
-            scatter.set_face_color(indices=newYellowPoints, color=color_points)
-            scatter.set_face_color(indices=newRedPoints, color=color_field)
-            scatter.mesh.mesh_data_changed()
-
-            canvas.yellowPoints = allNewYellowPoints
-            canvas.redPoints = allNewRedPoints
+            # Move field markers
+            redPoints = np.where(inField_all[idx_now,:])[0]
+            if np.setdiff1d(redPoints, canvas.redPoints).size != 0:
+                canvas.redPoints = redPoints
+                scatter_field.set_visible_boxes(redPoints)
 
             # Change camera angle and position
-            view.camera.azimuth = view.camera.azimuth-psi_diff
+            view.camera.azimuth = view.camera.azimuth + psi_diff
             view.camera.center = [x, y, z]
             
             # Update view
