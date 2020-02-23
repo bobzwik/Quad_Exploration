@@ -3,14 +3,13 @@
 # Code heavily inspired by:
 # Copyright (c) Vispy Development Team. All Rights Reserved.
 # Distributed under the (new) BSD License. See LICENSE.txt for more info.
+#
+# Modified by:
+# author: John Bass
+# email: john.bobzwik@gmail.com
+# license: MIT
+# Please feel free to use and modify this, but keep the above information. Thanks!
 # -----------------------------------------------------------------------------
-"""
-Modified by:
-author: John Bass
-email: john.bobzwik@gmail.com
-license: MIT
-Please feel free to use and modify this, but keep the above information. Thanks!
-"""
 
 import numpy as np
 from vispy.geometry import create_box

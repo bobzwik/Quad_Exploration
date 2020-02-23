@@ -3,14 +3,13 @@
 # Code heavily inspired by:
 # Copyright (c) Vispy Development Team. All Rights Reserved.
 # Distributed under the (new) BSD License. See LICENSE.txt for more info.
+#
+# Modified by:
+# author: John Bass
+# email: john.bobzwik@gmail.com
+# license: MIT
+# Please feel free to use and modify this, but keep the above information. Thanks!
 # -----------------------------------------------------------------------------
-"""
-Modified by:
-author: John Bass
-email: john.bobzwik@gmail.com
-license: MIT
-Please feel free to use and modify this, but keep the above information. Thanks!
-"""
 
 """ A MeshVisual Visual that uses the new shader Function.
 """
@@ -21,9 +20,22 @@ import numpy as np
 from vispy.visuals.visual import Visual
 from vispy.visuals.mesh import MeshVisual
 from vispy.visuals.shaders import Function, FunctionChain
-from vispy.gloo import VertexBuffer, IndexBuffer
+from vispy.gloo import VertexBuffer, IndexBuffer, gl
 from vispy.geometry import MeshData
 from vispy.color import Color, get_colormap
+from vispy.gloo.glir import GlirProgram
+
+# Monkey patch to make possible int8 VertexBuffer (for visibility array)
+NEW_ATYPEINFO = {
+    'float': (1, gl.GL_FLOAT, np.float32),
+    'vec2': (2, gl.GL_FLOAT, np.float32),
+    'vec3': (3, gl.GL_FLOAT, np.float32),
+    'vec4': (4, gl.GL_FLOAT, np.float32),
+    'int': (1, gl.GL_BYTE, np.int8),           # Changed from " 'int': (1, gl.GL_INT, np.int32), "
+    'bool': (1, gl.GL_BOOL, np.int32)
+}
+GlirProgram.ATYPEINFO = NEW_ATYPEINFO
+
 
 # Shader code for non lighted rendering with variable visibility
 vertex_template_vis = """
