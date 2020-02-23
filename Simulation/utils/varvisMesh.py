@@ -1,7 +1,16 @@
 # -*- coding: utf-8 -*-
 # -----------------------------------------------------------------------------
-
+# Code heavily inspired by:
+# Copyright (c) Vispy Development Team. All Rights Reserved.
+# Distributed under the (new) BSD License. See LICENSE.txt for more info.
 # -----------------------------------------------------------------------------
+"""
+Modified by:
+author: John Bass
+email: john.bobzwik@gmail.com
+license: MIT
+Please feel free to use and modify this, but keep the above information. Thanks!
+"""
 
 """ A MeshVisual Visual that uses the new shader Function.
 """
@@ -13,16 +22,14 @@ from vispy.visuals.visual import Visual
 from vispy.visuals.mesh import MeshVisual
 from vispy.visuals.shaders import Function, FunctionChain
 from vispy.gloo import VertexBuffer, IndexBuffer
-from vispy.gloo.buffer import DataBuffer, Buffer
 from vispy.geometry import MeshData
 from vispy.color import Color, get_colormap
-from vispy.visuals.shaders.variable import Variable, Varying
 
 # Shader code for non lighted rendering with variable visibility
 vertex_template_vis = """
 #version 150
-varying vec4 v_base_color;
-varying float draw_yes_no;
+out vec4 v_base_color;
+flat out int draw_yes_no;
 void main() {
     v_base_color = $color_transform($base_color);
     gl_Position = $transform($to_vec4($position));
@@ -32,8 +39,8 @@ void main() {
 
 fragment_template_vis = """
 #version 150
-varying vec4 v_base_color;
-varying float draw_yes_no;
+in vec4 v_base_color;
+flat in int draw_yes_no;
 void main() {
     if (draw_yes_no > 0.5){
         gl_FragColor = v_base_color;
@@ -215,9 +222,9 @@ class VarVisMeshVisual(MeshVisual):
         if self.variable_vis:
             # Initialize all faces as visible
             if self.mode is 'lines':
-                self._visible_verts = np.ones((faces.shape[0],2,1), dtype=np.uint8)
+                self._visible_verts = np.ones((faces.shape[0],2,1), dtype=np.int8)
             else:
-                self._visible_verts = np.ones((faces.shape[0],3,1), dtype=np.uint8)
+                self._visible_verts = np.ones((faces.shape[0],3,1), dtype=np.int8)
             # Create visibility VertexBuffer
             self.vis_buffer = VertexBuffer()
             self.vis_buffer.set_data(self._visible_verts)
