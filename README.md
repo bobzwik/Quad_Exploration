@@ -1,6 +1,10 @@
-# Quadcopter Artificial Potential Field Branch (of Quad_SimCon Project)
+# Quadcopter Exploration
 
-This branch is for developing Artificial Potential Field navigation within pointclouds. Essentially, every point of the pointcloud is an obstacle that exerts a force on the drone in order to stop it from colliding with the obstacle. In this project, the Potential Field is used to navigate within a voxelized pointcloud tunnel.
+This project is based on the dynamic model and controller designed in [this project](https://github.com/bobzwik/Quadcopter_SimCon), which uses PyDy to derive the equations of motion.
+
+This project has as a goal to simulated a quadcopter/quadrotor exploring unknown environments (this is nothing groundbreaking, I'm doing this on my spare time as a hobby and to learn Python).
+
+A pointcloud environment can be generated, where every point of the pointcloud can be considered as an obstacle. Currently, an Artificial Potential Field algorithm is used to navigate through the pointcloud ( each point exerts a force on the drone in order to stop it from colliding with it). More exploration algorithms are to come.
 
 [![Watch the video](http://img.youtube.com/vi/WuDDGpTPt2g/0.jpg)](https://youtu.be/WuDDGpTPt2g)
 
@@ -36,9 +40,7 @@ There are currently 3 different methods to visualize the pointcloud and the poin
 
 1. **Using 2D `Markers`.** This method runs fast but lacks depth perception (markers that are close or far are drawn the same size).
 
-2. **Using 3D `BoxMarkers` (points in the Potential Field have their face color updated).** This method is currently slow (work in progress), but depth is easier to understand. The markers are 3D cubes, but updating the face color of certain faces is currently CPU intensive.
-
-3. **Using two separate 3D `BoxMarkers` instances (a fixed one for the pointcloud tunnel, and a dynamic one for the points in the Potential Field).** The pointcloud tunnel is again presented as 3D cubes, and the points in the Potential Field use a second instance of `BoxMarkers`. As updating that smaller instance is less CPU intensive, is runs a bit faster (but work in progress).
+2. **Using 3D `BoxMarkers`.** Cubes (boxes) are helpful for depth perception, are visually more appealing but are slightly more GPU intensive.
 
 For now, you can select the visualizing method by commenting and uncommenting lines in the `utils\__init__.py` file.
 
@@ -53,6 +55,6 @@ If you have the pip package manager installed you can simply type:
 
 ## To-Do
 * Implement "Extended Potential Field" to reduce oscillations
-* Improve Vispy performance
 * Implement "Frontier Based Exploration" (so learn about ray-casting and possibly octomaps)
-* Use the `multiprocessing` Python package to parallelize different tasks (a process for the quadcopter dynamics, one for the control, one for the "Frontier Based Exploration" and one for the visualization) ([dev branch](https://github.com/bobzwik/Quadcopter_SimCon/tree/potentialField_multiprocess))
+* Implement some king of "Path Planning"
+* Use the `multiprocessing` Python package to parallelize different tasks (a process for the quadcopter dynamics, one for the control, one for the "Frontier Based Exploration" and one for the visualization)
