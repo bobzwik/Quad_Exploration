@@ -38,7 +38,7 @@ class MyScene(vispy.scene.SceneCanvas):
         self.timer = app.Timer()
         self.freeze()
 
-def third_PV_animation(t_all, waypoints, pos_all, quat_all, euler_all, sDes_tr_all, Ts, params, xyzType, yawType, potfld, notInRange_all, inRange_all, inField_all, ifsave):
+def third_PV_animation(t_all, waypoints, pos_all, quat_all, euler_all, sDes_tr_all, Ts, params, xyzType, yawType, potfld, notInRange_all, inRange_all, inField_all, ifsave, figures):
     
     x = pos_all[:,0]
     y = pos_all[:,1]
@@ -109,7 +109,7 @@ def third_PV_animation(t_all, waypoints, pos_all, quat_all, euler_all, sDes_tr_a
         if (idx_now < canvas.idx_prev):
             # Stop animation
             canvas.timer.stop()
-            app.quit()
+            figures()
         else:
             # Get drone state for current time
             Simtime = t_all[idx_now]
