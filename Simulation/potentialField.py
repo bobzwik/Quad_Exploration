@@ -106,7 +106,6 @@ class PotField:
             # Angle is obtained with angle = arccos(dot(u,v)/(norm(u)*norm(v)))
             # Influence is obtained with cos(angle)
             influence = np.divide(np.dot(obst_vect, target_vect), self.fieldDistance*target_norm)
-            # influence[influence < 0] = 0
             influence = influence**2
 
             # Extended Potential Field/Force
