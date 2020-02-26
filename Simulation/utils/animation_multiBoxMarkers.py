@@ -16,27 +16,11 @@ import time
 import sys
 
 import utils
-from utils.vispyMods import BoxMarkers, NonUpdatingTurntable
+from utils.vispyMods import MyScene, BoxMarkers, NonUpdatingTurntable
 import config
 
 rad2deg = 180.0/pi
 deg2rad = pi/180.0
-
-class MyScene(vispy.scene.SceneCanvas):
-    def __init__(self, pointcloud, **kwargs):
-        super(MyScene, self).__init__(**kwargs)
-        self.unfreeze()
-        self.pointcloud = pointcloud
-        self.startTime  = None
-        self.idx_prev = 0
-        self.yellowPoints = []
-        self.redPoints = []
-
-        if (config.orient == "NED"):
-            self.pointcloud[:,2] = -self.pointcloud[:,2]
-
-        self.timer = app.Timer()
-        self.freeze()
 
 def third_PV_animation(t_all, waypoints, pos_all, quat_all, euler_all, sDes_tr_all, Ts, params, xyzType, yawType, potfld, notInRange_all, inRange_all, inField_all, ifsave, figures):
     
@@ -109,6 +93,7 @@ def third_PV_animation(t_all, waypoints, pos_all, quat_all, euler_all, sDes_tr_a
         if (idx_now < canvas.idx_prev):
             # Stop animation
             canvas.timer.stop()
+            canvas.figs_displayed = True
             figures()
         else:
             # Get drone state for current time
@@ -169,3 +154,6 @@ def third_PV_animation(t_all, waypoints, pos_all, quat_all, euler_all, sDes_tr_a
 
     if sys.flags.interactive != 1:
         vispy.app.run()
+    
+    if not canvas.figs_displayed:
+        figures()

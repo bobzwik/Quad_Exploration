@@ -24,6 +24,30 @@ from vispy.scene.cameras.perspective import PerspectiveCamera
 import config
 
 ###################################
+# SceneCanvas object with added parameters for the pointcloud
+
+class MyScene(vispy.scene.SceneCanvas):
+    def __init__(self, pointcloud, **kwargs):
+        super(MyScene, self).__init__(**kwargs)
+        self.unfreeze()
+        self.pointcloud = pointcloud
+        self.startTime  = None
+        self.idx_prev = 0
+        self.yellowPoints = []
+        self.redPoints = []
+
+        if (config.orient == "NED"):
+            self.pointcloud[:,2] = -self.pointcloud[:,2]
+        
+        # Boolean for figure display
+        self.figs_displayed = False
+
+        # Timer
+        self.timer = app.Timer()
+        self.freeze()
+
+
+###################################
 # Create a Markers subclass that can easily have it's color array changed
 
 class ColorMarkers(visuals.Markers):
@@ -153,5 +177,3 @@ class NonUpdatingTurntable(vispy.scene.cameras.TurntableCamera):
                     self._event_value = self._fov
                 fov = self._event_value - d[1] / 5.0
                 self.fov = min(180.0, max(0.0, fov))
-
-# PerspectiveCamera.viewbox_mouse_event = new_viewbox_mouse_event
