@@ -61,13 +61,15 @@ def third_PV_animation(t_all, waypoints, pos_all, quat_all, euler_all, sDes_tr_a
     # Create scatter object and fill in the data
     color_points = (1, 1, 0.5, 1)
     color_field  = (1, 0, 0, 0.5)
+    color_wp     = (0, 1, 0, 0.5)
     color_edges  = (0, 0, 0, 0.3)
     scatter = BoxMarkers(potfld.pointcloud, 0.1, 0.1, 0.1, 
                     color=color_points, edge_color=color_edges, parent=view.scene)
     scatter_field = BoxMarkers(potfld.pointcloud, potfld.gridStep[0], potfld.gridStep[1], potfld.gridStep[2], 
                     color=color_field, edge_color=color_edges, variable_vis=True, parent=view.scene)
     scatter_field.set_visible_boxes(canvas.redPoints)
-
+    scatter_wp = BoxMarkers(waypoints, 0.5, 0.5, 0.5,
+                    color=color_wp, edge_color=color_edges, parent=view.scene)
     # Add a colored 3D axis for orientation
     axis = visuals.XYZAxis(parent=view.scene)
 

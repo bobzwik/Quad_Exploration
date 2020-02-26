@@ -93,7 +93,7 @@ class Trajectory:
         
         def pos_waypoint_arrived():
 
-            dist_consider_arrived = 0.2 # Distance to waypoint that is considered as "arrived"
+            dist_consider_arrived = 0.4 # Distance to waypoint that is considered as "arrived"
             if (t == 0):
                 self.t_idx = 0
                 self.end_reached = 0
