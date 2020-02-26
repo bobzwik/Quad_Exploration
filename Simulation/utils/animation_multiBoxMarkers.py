@@ -156,6 +156,7 @@ def third_PV_animation(t_all, waypoints, pos_all, quat_all, euler_all, sDes_tr_a
 
     if sys.flags.interactive != 1:
         vispy.app.run()
+        canvas.timer.stop()
     
     if not canvas.figs_displayed:
         figures()
