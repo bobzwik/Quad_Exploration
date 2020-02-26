@@ -52,10 +52,13 @@ class PotField:
         elif (pfType == 2):
             self.pfSatFor = 1
         elif (pfType == 3):
-            self.pfFor = 0
+            self.pfFor = 1
 
     
     def isWithinRange(self, quad):
+        # Determine which points are withing a certain 
+        # range, larger than the Potential Field Range
+        # ---------------------------
         self.withinRange = (abs(quad.pos[0]-self.pointcloud[:,0]) <= self.rangeRadius) & \
                            (abs(quad.pos[1]-self.pointcloud[:,1]) <= self.rangeRadius) & \
                            (abs(quad.pos[2]-self.pointcloud[:,2]) <= self.rangeRadius)
@@ -64,10 +67,14 @@ class PotField:
         self.idx_notWithinRange = np.where(self.notWithinRange)[0]
 
     def isWithinField(self, quad):
+        # Determine which points inside the first range is  
+        # within the Potential Field Range
+        # ---------------------------
         distance = norm(self.pointcloud[self.idx_withinRange,:] - quad.pos, axis=1)
 
         withinField = distance <= self.fieldRadius
         
+        # Distance to closest point in Field (if there are points in the Field)
         try:
             self.distanceMin = distance.min()
         except ValueError:
@@ -87,14 +94,14 @@ class PotField:
     def rep_force(self, quad, traj):
         
         # Repulsive Force
-        ##################
+        # ---------------------------
         k = 0.4
         F_rep_x = k*(1/self.fieldDistance - 1/self.fieldRadius)*(1/(self.fieldDistance**2))*(quad.pos[0] - self.fieldPointcloud[:,0])/self.fieldDistance
         F_rep_y = k*(1/self.fieldDistance - 1/self.fieldRadius)*(1/(self.fieldDistance**2))*(quad.pos[1] - self.fieldPointcloud[:,1])/self.fieldDistance
         F_rep_z = k*(1/self.fieldDistance - 1/self.fieldRadius)*(1/(self.fieldDistance**2))*(quad.pos[2] - self.fieldPointcloud[:,2])/self.fieldDistance
 
         # Rotational Field
-        ##################
+        # ---------------------------
         # Target vector
         target_vect = traj.sDes[0:3] - quad.pos
         target_norm = norm(target_vect)
@@ -109,7 +116,7 @@ class PotField:
             influence = influence**2
 
             # Extended Potential Field/Force
-            ##################
+            # ---------------------------
             k_influence = 1
             F_rep_x = np.multiply(F_rep_x, k_influence*np.abs(influence))
             F_rep_y = np.multiply(F_rep_y, k_influence*np.abs(influence))
