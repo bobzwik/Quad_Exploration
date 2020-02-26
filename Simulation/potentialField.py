@@ -22,8 +22,8 @@ class PotField:
         self.gridStep = importedData[0]
         self.num_points = len(self.pointcloud)
 
-        self.rangeRadius = 3
-        self.fieldRadius = 2.4
+        self.rangeRadius = 2.5
+        self.fieldRadius = 2
 
         self.max_pc_x = self.pointcloud[:,0].max()
         self.max_pc_y = self.pointcloud[:,1].max()
@@ -64,9 +64,8 @@ class PotField:
         self.idx_notWithinRange = np.where(self.notWithinRange)[0]
 
     def isWithinField(self, quad):
-        distance = ((self.pointcloud[self.idx_withinRange,0]-quad.pos[0])**2 +          \
-                    (self.pointcloud[self.idx_withinRange,1]-quad.pos[1])**2 +          \
-                    (self.pointcloud[self.idx_withinRange,2]-quad.pos[2])**2)**(0.5)
+        distance = norm(self.pointcloud[self.idx_withinRange,:] - quad.pos, axis=1)
+
         withinField = distance <= self.fieldRadius
         
         try:
@@ -85,10 +84,35 @@ class PotField:
         self.fieldPointcloud = self.pointcloud[self.idx_withinField]
         self.fieldDistance = distance[np.where(withinField)[0]]
 
-    def rep_force(self, quad):
-        k = 0.32
+    def rep_force(self, quad, traj):
+        
+        # Repulsive Force
+        ##################
+        k = 0.4
         F_rep_x = k*(1/self.fieldDistance - 1/self.fieldRadius)*(1/(self.fieldDistance**2))*(quad.pos[0] - self.fieldPointcloud[:,0])/self.fieldDistance
         F_rep_y = k*(1/self.fieldDistance - 1/self.fieldRadius)*(1/(self.fieldDistance**2))*(quad.pos[1] - self.fieldPointcloud[:,1])/self.fieldDistance
         F_rep_z = k*(1/self.fieldDistance - 1/self.fieldRadius)*(1/(self.fieldDistance**2))*(quad.pos[2] - self.fieldPointcloud[:,2])/self.fieldDistance
 
-        self.F_rep = np.array([np.sum(F_rep_x), np.sum(F_rep_y), np.sum(F_rep_z)])        
+        # Rotational Field
+        ##################
+        # Target vector
+        target_vect = traj.sDes[0:3] - quad.pos
+        target_norm = norm(target_vect)
+        if abs(target_norm) > 0.000001:
+            # Obstacle vectors
+            obst_vect = self.fieldPointcloud - quad.pos
+            
+            # Influence per point
+            # Angle is obtained with angle = arccos(dot(u,v)/(norm(u)*norm(v)))
+            # Influence is obtained with cos(angle)
+            influence = np.divide(np.dot(obst_vect, target_vect), self.fieldDistance*target_norm)
+            influence = influence**2
+
+            # Extended Potential Field/Force
+            ##################
+            k_influence = 1
+            F_rep_x = np.multiply(F_rep_x, k_influence*np.abs(influence))
+            F_rep_y = np.multiply(F_rep_y, k_influence*np.abs(influence))
+            F_rep_z = np.multiply(F_rep_z, k_influence*np.abs(influence))
+
+        self.F_rep = np.array([np.sum(F_rep_x), np.sum(F_rep_y), np.sum(F_rep_z)])

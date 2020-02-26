@@ -34,7 +34,7 @@ def quad_sim(t, Ts, quad, ctrl, wind, traj, potfld):
     # ---------------------------     
     potfld.isWithinRange(quad)
     potfld.isWithinField(quad)
-    potfld.rep_force(quad)
+    potfld.rep_force(quad, traj)
 
     # Generate Commands (for next iteration)
     # ---------------------------
@@ -84,7 +84,7 @@ def main():
     # ---------------------------
     potfld.isWithinRange(quad)
     potfld.isWithinField(quad)        
-    potfld.rep_force(quad)
+    potfld.rep_force(quad, traj)
 
     # Generate First Commands
     # ---------------------------

@@ -14,27 +14,11 @@ import time
 import sys
 
 import utils
-from utils.vispyMods import ColorMarkers, NonUpdatingTurntable
+from utils.vispyMods import MyScene, ColorMarkers, NonUpdatingTurntable
 import config
 
 rad2deg = 180.0/pi
 deg2rad = pi/180.0
-
-class MyScene(vispy.scene.SceneCanvas):
-    def __init__(self, pointcloud, **kwargs):
-        super(MyScene, self).__init__(**kwargs)
-        self.unfreeze()
-        self.pointcloud = pointcloud
-        self.startTime  = None
-        self.idx_prev = 0
-        self.yellowPoints = []
-        self.redPoints = []
-
-        if (config.orient == "NED"):
-            self.pointcloud[:,2] = -self.pointcloud[:,2]
-
-        self.timer = app.Timer()
-        self.freeze()
 
 
 def third_PV_animation(t_all, waypoints, pos_all, quat_all, euler_all, sDes_tr_all, Ts, params, xyzType, yawType, potfld, notInRange_all, inRange_all, inField_all, ifsave, figures):
@@ -76,6 +60,7 @@ def third_PV_animation(t_all, waypoints, pos_all, quat_all, euler_all, sDes_tr_a
     # Create color array
     color_points = (1, 1, 0.5, 1)
     color_field  = (1, 0, 0, 1)
+    color_wp     = (0, 1, 0, 0.5)
     color_edges  = (0, 0, 0, 0.3)
     colors = np.ones((potfld.num_points, 4), dtype=np.float32)
 
@@ -86,7 +71,10 @@ def third_PV_animation(t_all, waypoints, pos_all, quat_all, euler_all, sDes_tr_a
     scatter = ColorMarkers()
     scatter.set_data(canvas.pointcloud, edge_color=color_edges, face_color=colors, size=6)
     view.add(scatter)
-
+    scatter_wp = ColorMarkers()
+    scatter_wp.set_data(waypoints, edge_color=color_edges, face_color=color_wp, size=15)
+    view.add(scatter_wp)
+    
     # Add a colored 3D axis for orientation
     axis = scene.visuals.XYZAxis(parent=view.scene)
 
@@ -112,6 +100,7 @@ def third_PV_animation(t_all, waypoints, pos_all, quat_all, euler_all, sDes_tr_a
         if (idx_now < canvas.idx_prev):
             # Stop animation
             canvas.timer.stop()
+            canvas.figs_displayed = True
             figures()        
         else:
             # Get drone state for current time
@@ -176,3 +165,7 @@ def third_PV_animation(t_all, waypoints, pos_all, quat_all, euler_all, sDes_tr_a
 
     if sys.flags.interactive != 1:
         vispy.app.run()
+        canvas.timer.stop()
+
+    if not canvas.figs_displayed:
+        figures()
