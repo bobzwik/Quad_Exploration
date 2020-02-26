@@ -60,6 +60,7 @@ def third_PV_animation(t_all, waypoints, pos_all, quat_all, euler_all, sDes_tr_a
     # Create color array
     color_points = (1, 1, 0.5, 1)
     color_field  = (1, 0, 0, 1)
+    color_wp     = (0, 1, 0, 0.5)
     color_edges  = (0, 0, 0, 0.3)
     colors = np.ones((potfld.num_points, 4), dtype=np.float32)
 
@@ -70,7 +71,10 @@ def third_PV_animation(t_all, waypoints, pos_all, quat_all, euler_all, sDes_tr_a
     scatter = ColorMarkers()
     scatter.set_data(canvas.pointcloud, edge_color=color_edges, face_color=colors, size=6)
     view.add(scatter)
-
+    scatter_wp = ColorMarkers()
+    scatter_wp.set_data(waypoints, edge_color=color_edges, face_color=color_wp, size=15)
+    view.add(scatter_wp)
+    
     # Add a colored 3D axis for orientation
     axis = scene.visuals.XYZAxis(parent=view.scene)
 
@@ -161,6 +165,7 @@ def third_PV_animation(t_all, waypoints, pos_all, quat_all, euler_all, sDes_tr_a
 
     if sys.flags.interactive != 1:
         vispy.app.run()
+        canvas.timer.stop()
 
-    if canvas.figs_displayed:
+    if not canvas.figs_displayed:
         figures()
