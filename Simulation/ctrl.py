@@ -80,8 +80,16 @@ velMaxAll = 1.5
 
 saturateVel_separetely = False
 
+# Max Accelerations
+udotMax = 2.0
+vdotMax = 2.0
+wdotMax = 2.0
+
+accMax = np.array([udotMax, vdotMax, wdotMax])
+accMaxAll = 1.5
+
 # Max tilt
-tiltMax = 50.0*deg2rad
+tiltMax = 15.0*deg2rad
 
 # Max Rate
 pMax = 100.0*deg2rad
