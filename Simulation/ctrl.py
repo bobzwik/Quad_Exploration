@@ -213,7 +213,7 @@ class Control:
         # Generate Yaw setpoint and FF
         # ---------------------------
         # If yawType == "Follow", then set Yaw setpoint and Yaw Rate Feed-Forward to follow the velocity setpoint
-        if (traj.yawType == 4):
+        if (traj.yawType == 4 and traj.omit_yaw_follow == 0):
             totalVel_sp = norm(self.vel_sp)
             if (totalVel_sp > 0.1):
                 # Calculate desired Yaw
