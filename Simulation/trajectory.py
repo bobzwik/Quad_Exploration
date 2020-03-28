@@ -51,6 +51,10 @@ class Trajectory:
         
         # Get initial heading
         self.current_heading = quad.psi
+
+        # Initialize "arrived" and "omit_yaw" bool
+        self.arrived = 0
+        self.omit_yaw_follow = 0
         
         # Initialize trajectory setpoint
         self.desPos = np.zeros(3)    # Desired position (x, y, z)
@@ -94,16 +98,27 @@ class Trajectory:
         def pos_waypoint_arrived():
 
             dist_consider_arrived = 0.4 # Distance to waypoint that is considered as "arrived"
+            time_wait = 2               # Time to wait after arriving at waypoint before setting new waypoint
+
             if (t == 0):
                 self.t_idx = 0
                 self.end_reached = 0
+                self.arrived = 1
+                self.timeStartNext = 0
             elif not(self.end_reached):
                 distance_to_next_wp = ((self.wps[self.t_idx,0]-quad.pos[0])**2 + (self.wps[self.t_idx,1]-quad.pos[1])**2 + (self.wps[self.t_idx,2]-quad.pos[2])**2)**(0.5)
-                if (distance_to_next_wp < dist_consider_arrived):
-                    self.t_idx += 1
-                    if (self.t_idx >= len(self.wps[:,0])):    # if t_idx has reached the end of planned waypoints
-                        self.end_reached = 1
-                        self.t_idx = -1
+                if (self.arrived == 0) and (distance_to_next_wp < dist_consider_arrived):
+                    self.arrived = 1
+                    self.omit_yaw_follow = 1
+                    self.timeStartNext = t + time_wait
+                if (self.arrived == 1):
+                    if (t >= self.timeStartNext):
+                        self.arrived = 0
+                        self.omit_yaw_follow = 0
+                        self.t_idx += 1
+                        if (self.t_idx >= len(self.wps[:,0])):    # if t_idx has reached the end of planned waypoints
+                            self.end_reached = 1
+                            self.t_idx = -1
                     
             self.desPos = self.wps[self.t_idx,:]
 
