@@ -44,6 +44,7 @@ M2 = Point('M2')
 M3 = Point('M3')
 M4 = Point('M4')
 Wo = Point('Wo')    # Arbitrary point in the Wind Frame
+TP = Point('TP')    # Tether attachement point
 
 # Variables
 # ---------------------------
@@ -64,6 +65,8 @@ q0d, q1d, q2d, q3d, pd, qd, rd = dynamicsymbols('q0 q1 q2 q3 p q r', 1)
 mB, g, dxm, dym, dzm, IBxx, IByy, IBzz, IRzz, wM1, wM2, wM3, wM4 = symbols('mB g dxm dym dzm IBxx IByy IBzz IRzz wM1 wM2 wM3 wM4')
 ThrM1, ThrM2, ThrM3, ThrM4, TorM1, TorM2, TorM3, TorM4 = symbols('ThrM1 ThrM2 ThrM3 ThrM4 TorM1 TorM2 TorM3 TorM4')
 qW1, qW2, velW, Cd = symbols('qW1 qW2 velW Cd')
+tetherPos_x, tetherPos_y, tetherPos_z = symbols('tetherPos_x tetherPos_y tetherPos_z')
+TetherX, TetherY, TetherZ = symbols('TetherX TetherY TetherZ')
 
 # Rotation Quaternion
 # ---------------------------
@@ -91,6 +94,11 @@ M1.v2pt_theory(Bcm, N, B)
 M2.v2pt_theory(Bcm, N, B)
 M3.v2pt_theory(Bcm, N, B)
 M4.v2pt_theory(Bcm, N, B)
+
+# Tether placement
+# ---------------------------
+TP.set_pos(Bcm, tetherPos_x*B.x + tetherPos_y*B.y - tetherPos_z*B.z)
+TP.v2pt_theory(Bcm, N, B)
 
 # Inertia Dyadic
 # ---------------------------
@@ -128,7 +136,9 @@ dragZ = (Bcm, -Cd*sign(dot(airVel, N.z))*(dot(airVel, N.z)**2)*N.z)
 
 gyro = (B, -IRzz*cross(B.ang_vel_in(N), (wM1 - wM2 + wM3 - wM4)*B.z))
 
-ForceList = [Grav_Force, FM1, FM2, FM3, FM4, TM1, TM2, TM3, TM4, dragX, dragY, dragZ, gyro]
+F_tether = (TP, TetherX*N.x + TetherY*N.y + TetherZ*N.z)
+
+ForceList = [Grav_Force, FM1, FM2, FM3, FM4, TM1, TM2, TM3, TM4, dragX, dragY, dragZ, gyro, F_tether]
 
 # Calculate Quaternion Derivative
 # ---------------------------

@@ -159,24 +159,40 @@ class Quadcopter:
         # velW = 5          # m/s
         # qW1 = 0*deg2rad    # Wind heading
         # qW2 = 60*deg2rad     # Wind elevation (positive = upwards wind in NED, positive = downwards wind in ENU)
-    
+
+        # Tether
+        # ---------------------------
+        TetherX = -2
+        TetherY = 0
+        TetherZ = 2
+        tetherPos_x = -0.1
+        tetherPos_y = 0
+        tetherPos_z = 0
+
         # State Derivatives (from PyDy) This is already the analytically solved vector of MM*x = RHS
         # ---------------------------
         if (config.orient == "NED"):
             DynamicsDot = np.array([
-                [                                                                                                                                   xdot],
-                [                                                                                                                                   ydot],
-                [                                                                                                                                   zdot],
-                [                                                                                                        -0.5*p*q1 - 0.5*q*q2 - 0.5*q3*r],
-                [                                                                                                         0.5*p*q0 - 0.5*q*q3 + 0.5*q2*r],
-                [                                                                                                         0.5*p*q3 + 0.5*q*q0 - 0.5*q1*r],
-                [                                                                                                        -0.5*p*q2 + 0.5*q*q1 + 0.5*q0*r],
-                [     (Cd*sign(velW*cos(qW1)*cos(qW2) - xdot)*(velW*cos(qW1)*cos(qW2) - xdot)**2 - 2*(q0*q2 + q1*q3)*(ThrM1 + ThrM2 + ThrM3 + ThrM4))/mB],
-                [     (Cd*sign(velW*sin(qW1)*cos(qW2) - ydot)*(velW*sin(qW1)*cos(qW2) - ydot)**2 + 2*(q0*q1 - q2*q3)*(ThrM1 + ThrM2 + ThrM3 + ThrM4))/mB],
-                [ (-Cd*sign(velW*sin(qW2) + zdot)*(velW*sin(qW2) + zdot)**2 - (ThrM1 + ThrM2 + ThrM3 + ThrM4)*(q0**2 - q1**2 - q2**2 + q3**2) + g*mB)/mB],
-                [                                       ((IByy - IBzz)*q*r - IRzz*(wM1 - wM2 + wM3 - wM4)*q + ( ThrM1 - ThrM2 - ThrM3 + ThrM4)*dym)/IBxx],
-                [                                       ((IBzz - IBxx)*p*r + IRzz*(wM1 - wM2 + wM3 - wM4)*p + ( ThrM1 + ThrM2 - ThrM3 - ThrM4)*dxm)/IByy],
-                [                                                                               ((IBxx - IByy)*p*q - TorM1 + TorM2 - TorM3 + TorM4)/IBzz]])
+                [                                                                                                                                             xdot],
+                [                                                                                                                                             ydot],
+                [                                                                                                                                             zdot],
+                [                                                                                                                  -0.5*p*q1 - 0.5*q*q2 - 0.5*q3*r],
+                [                                                                                                                   0.5*p*q0 - 0.5*q*q3 + 0.5*q2*r],
+                [                                                                                                                   0.5*p*q3 + 0.5*q*q0 - 0.5*q1*r],
+                [                                                                                                                  -0.5*p*q2 + 0.5*q*q1 + 0.5*q0*r],
+                [     (Cd*(velW*cos(qW1)*cos(qW2) - xdot)**2*sign(velW*cos(qW1)*cos(qW2) - xdot) + TetherX - 2*(q0*q2 + q1*q3)*(ThrM1 + ThrM2 + ThrM3 + ThrM4))/mB],
+                [     (Cd*(velW*sin(qW1)*cos(qW2) - ydot)**2*sign(velW*sin(qW1)*cos(qW2) - ydot) + TetherY + 2*(q0*q1 - q2*q3)*(ThrM1 + ThrM2 + ThrM3 + ThrM4))/mB],
+                [ (-Cd*(velW*sin(qW2) + zdot)**2*sign(velW*sin(qW2) + zdot) + TetherZ - (q0**2 - q1**2 - q2**2 + q3**2)*(ThrM1 + ThrM2 + ThrM3 + ThrM4) + g*mB)/mB],
+                [                                                   ((IByy - IBzz)*q*r - IRzz*(wM1 - wM2 + wM3 - wM4)*q + (ThrM1 - ThrM2 - ThrM3 + ThrM4)*dym + 
+                                                tetherPos_y*(2*TetherX*(q0*q2 + q1*q3) - 2*TetherY*(q0*q1 - q2*q3) + TetherZ*(q0**2 - q1**2 - q2**2 + q3**2)) + 
+                                              tetherPos_z*(-2*TetherX*(q0*q3 - q1*q2) + TetherY*(q0**2 - q1**2 + q2**2 - q3**2) + 2*TetherZ*(q0*q1 + q2*q3)))/IBxx],
+                [                                                   ((IBzz - IBxx)*p*r + IRzz*(wM1 - wM2 + wM3 - wM4)*p + (ThrM1 + ThrM2 - ThrM3 - ThrM4)*dxm - 
+                                                tetherPos_x*(2*TetherX*(q0*q2 + q1*q3) - 2*TetherY*(q0*q1 - q2*q3) + TetherZ*(q0**2 - q1**2 - q2**2 + q3**2)) - 
+                                               tetherPos_z*(TetherX*(q0**2 + q1**2 - q2**2 - q3**2) + 2*TetherY*(q0*q3 + q1*q2) - 2*TetherZ*(q0*q2 - q1*q3)))/IByy],
+                [                                                                                          ((IBxx - IByy)*p*q - TorM1 + TorM2 - TorM3 + TorM4 + 
+                                               tetherPos_x*(-2*TetherX*(q0*q3 - q1*q2) + TetherY*(q0**2 - q1**2 + q2**2 - q3**2) + 2*TetherZ*(q0*q1 + q2*q3)) - 
+                                               tetherPos_y*(TetherX*(q0**2 + q1**2 - q2**2 - q3**2) + 2*TetherY*(q0*q3 + q1*q2) - 2*TetherZ*(q0*q2 - q1*q3)))/IBzz]])
+        
         elif (config.orient == "ENU"):
             DynamicsDot = np.array([
                 [                                                                                                                                   xdot],
