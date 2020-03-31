@@ -21,6 +21,7 @@ import config
 
 rad2deg = 180.0/pi
 deg2rad = pi/180.0
+fullscreen = False
 
 def third_PV_animation(t_all, waypoints, pos_all, quat_all, euler_all, sDes_tr_all, Ts, params, xyzType, yawType, potfld, notInRange_all, inRange_all, inField_all, ifsave, figures):
     
@@ -38,8 +39,13 @@ def third_PV_animation(t_all, waypoints, pos_all, quat_all, euler_all, sDes_tr_a
 
     psi_ini = euler_all[0,2]*rad2deg
 
+    if fullscreen:
+        canvasSize = (1920, 1080)
+    else:
+        canvasSize = (800,600)
+
     # Add Canvas
-    canvas = MyScene(pointcloud=potfld.pointcloud, keys='interactive', show=True)
+    canvas = MyScene(pointcloud=potfld.pointcloud, size=canvasSize, keys='interactive', show=True)
     canvas.measure_fps()
     
     # Add Camera
